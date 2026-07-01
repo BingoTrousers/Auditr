@@ -65,7 +65,7 @@ export default function Home() {
         <div className="mb-10 text-center">
           <h1 className="mb-3 font-sans text-[34px] font-extrabold tracking-tight text-ink-1">SEO Audit Tool</h1>
           <p className="font-sans text-base leading-relaxed text-ink-2">
-            Enter a URL to run a quick, one-off SEO audit — no signup, nothing saved.
+            Enter a URL to run a quick, one-off SEO audit.
           </p>
         </div>
 
