@@ -6,25 +6,27 @@ interface AuditSectionProps {
   message: string;
 }
 
-const STATUS_STYLES: Record<CheckStatus, { badge: string; text: string; dot: string }> = {
-  pass: { badge: 'bg-green-100 text-green-800', text: 'Pass', dot: 'bg-green-500' },
-  warning: { badge: 'bg-yellow-100 text-yellow-800', text: 'Warning', dot: 'bg-yellow-500' },
-  fail: { badge: 'bg-red-100 text-red-800', text: 'Fail', dot: 'bg-red-500' },
+const STATUS_STYLES: Record<CheckStatus, { pill: string; dot: string; label: string }> = {
+  pass: { pill: 'bg-pass-bg border-pass-border text-pass-text', dot: 'bg-pass-dot', label: 'Pass' },
+  warning: { pill: 'bg-warn-bg border-warn-border text-warn-text', dot: 'bg-warn-dot', label: 'Warning' },
+  fail: { pill: 'bg-fail-bg border-fail-border text-fail-text', dot: 'bg-fail-dot', label: 'Fail' },
 };
 
 export default function AuditSection({ label, status, message }: AuditSectionProps) {
   const styles = STATUS_STYLES[status];
 
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-3 last:border-b-0">
-      <div>
-        <p className="font-medium text-gray-900">{label}</p>
-        <p className="mt-0.5 text-sm text-gray-600">{message}</p>
+    <div className="border-t border-line px-5 py-4">
+      <div className="mb-1.5 flex items-start justify-between gap-4">
+        <span className="font-sans text-[15px] font-semibold text-ink-1">{label}</span>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] py-1 font-sans text-xs font-semibold ${styles.pill}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+          {styles.label}
+        </span>
       </div>
-      <span className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${styles.badge}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
-        {styles.text}
-      </span>
+      <div className="max-w-[560px] font-sans text-sm leading-relaxed text-ink-2">{message}</div>
     </div>
   );
 }

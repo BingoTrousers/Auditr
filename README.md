@@ -60,9 +60,10 @@ app/
   globals.css
 components/
   UrlForm.tsx           URL input + validation + loading state
-  ScoreCard.tsx          Overall score, color-coded
+  ScoreCard.tsx          Overall score, color-coded band (Good/Needs Work/Poor)
   AuditSection.tsx       Single check row (label, status badge, message)
-  ResultsView.tsx        Composes ScoreCard + grouped AuditSections
+  ResultsView.tsx        Composes ScoreCard + collapsible, grouped AuditSections
+  ErrorAlert.tsx          Status-aware error banner (rate limit / fetch failure / server error)
 lib/
   audit/fetchPage.ts      SSRF-safe fetch with timeout, redirect handling, size cap
   audit/parseMeta.ts      Title/description/canonical/robots checks
@@ -79,3 +80,13 @@ lib/
 
 - The rate limiter and any per-instance state are in-memory only — they reset on cold starts/redeploys/multi-instance deployments. Acceptable for a low-traffic tool; swap in Redis/Upstash if stricter limits are needed.
 - `app/api/audit/route.ts` runs on the Node.js runtime (`export const runtime = 'nodejs'`), not Edge, since it uses `dns` and `cheerio`.
+
+## Design System
+
+Visual design (colors, type scale, spacing, component states) is sourced from the "Next.js SEO Audit Design System" project in Claude Design (`Home.dc.html`, `Results.dc.html`, `ErrorStates.dc.html`, `DesignTokens.dc.html`). Tokens live as CSS variables in `app/globals.css` (light theme default, dark theme via `prefers-color-scheme`) and are exposed through `tailwind.config.ts` (`bg-canvas`, `text-ink-1/2/3`, `bg-pass-bg`/`warn`/`fail`, etc). Fonts are Manrope (UI/headings) and IBM Plex Mono (scores, counts, URLs), loaded via `next/font/google`.
+
+Two elements shown in the design were **not** implemented because they assume data this app doesn't produce:
+- Extended check groups for Performance, Structured Data, and Social Tags (shown behind a demo toggle in `Results.dc.html`) — the API only returns `meta`/`headings`/`images`/`links`.
+- A "compact score card for comparing URLs" variant, which implies a recent-audits history feature that doesn't exist here.
+
+If either becomes real (e.g. a PageSpeed API check, or persisted audit history), the styling patterns already exist in the source design to extend from.

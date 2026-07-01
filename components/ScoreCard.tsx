@@ -3,24 +3,56 @@ interface ScoreCardProps {
   url: string;
 }
 
-function getScoreColorClasses(score: number): { bg: string; text: string; ring: string } {
-  if (score < 50) {
-    return { bg: 'bg-red-50', text: 'text-red-600', ring: 'ring-red-200' };
-  }
-  if (score < 80) {
-    return { bg: 'bg-yellow-50', text: 'text-yellow-600', ring: 'ring-yellow-200' };
-  }
-  return { bg: 'bg-green-50', text: 'text-green-600', ring: 'ring-green-200' };
+const BANDS = {
+  good: {
+    label: 'Good',
+    pill: 'bg-pass-bg border-pass-border text-pass-text',
+    text: 'text-pass-text',
+    bar: 'bg-pass-text',
+  },
+  medium: {
+    label: 'Needs Work',
+    pill: 'bg-warn-bg border-warn-border text-warn-text',
+    text: 'text-warn-text',
+    bar: 'bg-warn-text',
+  },
+  poor: {
+    label: 'Poor',
+    pill: 'bg-fail-bg border-fail-border text-fail-text',
+    text: 'text-fail-text',
+    bar: 'bg-fail-text',
+  },
+} as const;
+
+function getBand(score: number) {
+  if (score >= 80) return BANDS.good;
+  if (score >= 50) return BANDS.medium;
+  return BANDS.poor;
 }
 
 export default function ScoreCard({ score, url }: ScoreCardProps) {
-  const colors = getScoreColorClasses(score);
+  const band = getBand(score);
+  const clamped = Math.max(0, Math.min(100, score));
 
   return (
-    <div className={`flex flex-col items-center gap-2 rounded-xl p-8 ring-1 ${colors.bg} ${colors.ring}`}>
-      <span className="text-sm font-medium text-gray-500 break-all text-center">{url}</span>
-      <span className={`text-6xl font-bold ${colors.text}`}>{score}</span>
-      <span className="text-sm text-gray-500">out of 100</span>
+    <div className="rounded-2xl border border-line bg-surface px-8 py-7">
+      <div className="mb-[22px] flex items-start justify-between gap-4">
+        <div className="break-all font-mono text-[13px] text-ink-2">{url}</div>
+        <div
+          className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-3 py-[5px] font-sans text-xs font-bold ${band.pill}`}
+        >
+          {band.label}
+        </div>
+      </div>
+
+      <div className="mb-[18px] flex items-baseline gap-2">
+        <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{score}</span>
+        <span className="font-mono text-xl font-medium text-ink-3">/ 100</span>
+      </div>
+
+      <div className="h-2 overflow-hidden rounded-full bg-line">
+        <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${clamped}%` }} />
+      </div>
     </div>
   );
 }

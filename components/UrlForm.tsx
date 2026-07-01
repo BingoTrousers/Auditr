@@ -7,10 +7,14 @@ interface UrlFormProps {
   loading: boolean;
 }
 
+function normalizeUrl(input: string): string {
+  return /^https?:\/\//i.test(input) ? input : `https://${input}`;
+}
+
 function isLikelyValidUrl(value: string): boolean {
   try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    const parsed = new URL(normalizeUrl(value));
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname.includes('.');
   } catch {
     return false;
   }
@@ -18,45 +22,47 @@ function isLikelyValidUrl(value: string): boolean {
 
 export default function UrlForm({ onSubmit, loading }: UrlFormProps) {
   const [value, setValue] = useState('');
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = value.trim();
 
-    if (!trimmed) {
-      setValidationError('Please enter a URL.');
+    if (!trimmed || !isLikelyValidUrl(trimmed)) {
+      setFieldError('Enter a valid URL, like https://example.com.');
       return;
     }
 
-    if (!isLikelyValidUrl(trimmed)) {
-      setValidationError('Please enter a valid http:// or https:// URL.');
-      return;
-    }
-
-    setValidationError(null);
-    onSubmit(trimmed);
+    setFieldError(null);
+    onSubmit(normalizeUrl(trimmed));
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+    <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
       <div className="flex-1">
         <input
           type="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="https://example.com"
+          onChange={(e) => {
+            setValue(e.target.value);
+            setFieldError(null);
+          }}
           disabled={loading}
-          className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+          placeholder="https://example.com"
+          className={`w-full rounded-[10px] border bg-surface px-4 py-[13px] font-sans text-[15px] text-ink-1 outline-none disabled:opacity-60 ${
+            fieldError ? 'border-fail-border' : 'border-lineStrong'
+          }`}
         />
-        {validationError && <p className="mt-1 text-sm text-red-600">{validationError}</p>}
+        {fieldError && <div className="mt-2 font-sans text-[13px] text-fail-text">{fieldError}</div>}
       </div>
       <button
         type="submit"
         disabled={loading}
-        className="rounded-md bg-blue-600 px-6 py-2 font-medium text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        className={`whitespace-nowrap rounded-[10px] px-[22px] py-[13px] font-sans text-[15px] font-bold text-white transition-colors ${
+          loading ? 'cursor-default bg-lineStrong' : 'cursor-pointer bg-accent hover:bg-accent-hover'
+        }`}
       >
-        {loading ? 'Auditing…' : 'Run Audit'}
+        {loading ? 'Running audit…' : 'Run Audit'}
       </button>
     </form>
   );
