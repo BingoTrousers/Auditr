@@ -65,6 +65,7 @@ components/
   AuditSection.tsx       Single check row (label, status badge, message)
   ResultsView.tsx        Composes ScoreCard + collapsible, grouped AuditSections
   ErrorAlert.tsx          Status-aware error banner (rate limit / fetch failure / server error)
+  ThemeToggle.tsx         Manual light/dark switch (class + localStorage)
 lib/
   audit/fetchPage.ts      SSRF-safe fetch with timeout, redirect handling, size cap, WAF header hint
   audit/detectBlocking.ts WAF/bot-protection challenge-page detection (Cloudflare, Akamai, etc.)
@@ -85,7 +86,9 @@ lib/
 
 ## Design System
 
-Visual design (colors, type scale, spacing, component states) is sourced from the "Next.js SEO Audit Design System" project in Claude Design (`Home.dc.html`, `Results.dc.html`, `ErrorStates.dc.html`, `DesignTokens.dc.html`). Tokens live as CSS variables in `app/globals.css` (light theme default, dark theme via `prefers-color-scheme`) and are exposed through `tailwind.config.ts` (`bg-canvas`, `text-ink-1/2/3`, `bg-pass-bg`/`warn`/`fail`, etc). Fonts are Manrope (UI/headings) and IBM Plex Mono (scores, counts, URLs), loaded via `next/font/google`.
+Visual design (colors, type scale, spacing, component states) is sourced from the "Next.js SEO Audit Design System" project in Claude Design (`Home.dc.html`, `Results.dc.html`, `ErrorStates.dc.html`, `DesignTokens.dc.html`). Tokens live as CSS variables in `app/globals.css` and are exposed through `tailwind.config.ts` (`bg-canvas`, `text-ink-1/2/3`, `bg-pass-bg`/`warn`/`fail`, etc). Fonts are Manrope (UI/headings) and IBM Plex Mono (scores, counts, URLs), loaded via `next/font/google`. `app/icon.svg` provides the favicon and matches the header's magnifying-glass badge.
+
+Theme defaults to the system's `prefers-color-scheme`, overridable via the header's light/dark toggle (`ThemeToggle`), which persists the choice to `localStorage` and applies it via a `dark`/`light` class on `<html>` (set before hydration by a static inline script in `app/layout.tsx` to avoid a flash of the wrong theme).
 
 Two elements shown in the design were **not** implemented because they assume data this app doesn't produce:
 - Extended check groups for Performance, Structured Data, and Social Tags (shown behind a demo toggle in `Results.dc.html`) — the API only returns `meta`/`headings`/`images`/`links`.
