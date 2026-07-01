@@ -6,6 +6,7 @@ A stateless SEO audit tool built with Next.js 14 (App Router) and TypeScript. Pa
 
 - Server-side fetch of the target page (avoids CORS, keeps the check consistent regardless of client)
 - On-page checks via [cheerio](https://cheerio.js.org/):
+  - **Access & Bot Protection**: flags when the fetched page looks like a WAF/bot-protection challenge page (Cloudflare, Akamai, Imperva/Incapsula, PerimeterX, DataDome, etc.) rather than real content, so a misleadingly bad score doesn't go unexplained
   - **Meta**: title tag, meta description, canonical link, robots meta tag
   - **Headings**: H1 presence/uniqueness, skipped heading levels (H1→H2→H3)
   - **Images**: alt text coverage
@@ -47,7 +48,7 @@ Success (200):
 Errors return `{ "error": "..." }` with an appropriate status code:
 - `400` — invalid/malformed URL, disallowed protocol, private/internal IP target, non-HTML response, oversized response
 - `429` — rate limit exceeded
-- `502` / `504` — upstream fetch failure or timeout
+- `502` / `504` — upstream fetch failure or timeout (502 error messages include a WAF hint like "This looks like it may be Cloudflare blocking automated requests" when response headers match a known WAF/CDN fingerprint)
 - `500` — unexpected server error
 
 ## Project Structure
@@ -65,7 +66,8 @@ components/
   ResultsView.tsx        Composes ScoreCard + collapsible, grouped AuditSections
   ErrorAlert.tsx          Status-aware error banner (rate limit / fetch failure / server error)
 lib/
-  audit/fetchPage.ts      SSRF-safe fetch with timeout, redirect handling, size cap
+  audit/fetchPage.ts      SSRF-safe fetch with timeout, redirect handling, size cap, WAF header hint
+  audit/detectBlocking.ts WAF/bot-protection challenge-page detection (Cloudflare, Akamai, etc.)
   audit/parseMeta.ts      Title/description/canonical/robots checks
   audit/parseHeadings.ts  Heading structure checks
   audit/parseImages.ts    Alt text coverage

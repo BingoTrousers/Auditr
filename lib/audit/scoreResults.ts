@@ -8,6 +8,7 @@ import type { AuditCheck, AuditResult, CheckStatus } from './types';
  * no changes to the aggregation logic below are required.
  */
 const GROUP_PENALTIES: Record<string, Record<CheckStatus, number>> = {
+  access: { fail: 20, warning: 10, pass: 0 },
   meta: { fail: 15, warning: 6, pass: 0 },
   headings: { fail: 12, warning: 5, pass: 0 },
   images: { fail: 10, warning: 4, pass: 0 },

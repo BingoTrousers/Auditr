@@ -55,6 +55,26 @@ function createPinnedLookup(hostname: string, resolvedIps: string[]): LookupFunc
   }) as LookupFunction;
 }
 
+/**
+ * Inspects response headers for well-known WAF/bot-protection fingerprints,
+ * so a blocked request can be reported as "likely WAF-blocked" rather than
+ * a generic HTTP error.
+ */
+function detectWafFromHeaders(headers: UndiciResponse['headers']): string | null {
+  const server = headers.get('server')?.toLowerCase() ?? '';
+
+  if (server.includes('cloudflare')) return 'Cloudflare';
+  if (server.includes('akamaighost')) return 'Akamai';
+  if (headers.get('x-sucuri-id') || headers.get('x-sucuri-cache')) return 'Sucuri';
+  if (headers.get('x-datadome')) return 'DataDome';
+  if (headers.get('x-iinfo') || (headers.get('x-cdn')?.toLowerCase().includes('incapsula') ?? false)) {
+    return 'Imperva / Incapsula';
+  }
+  if (headers.get('x-px') || headers.get('x-px-block-uuid')) return 'PerimeterX / HUMAN';
+
+  return null;
+}
+
 async function readBodyWithLimit(response: UndiciResponse): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   const reader = response.body?.getReader();
 
@@ -141,7 +161,11 @@ export async function fetchPage(url: string): Promise<FetchPageResult> {
     }
 
     if (!response.ok) {
-      return { ok: false, error: `The target URL returned an HTTP ${response.status} error.`, status: 502 };
+      const waf = detectWafFromHeaders(response.headers);
+      const hint = waf
+        ? ` This looks like it may be ${waf} blocking automated requests rather than a real error on the site.`
+        : '';
+      return { ok: false, error: `The target URL returned an HTTP ${response.status} error.${hint}`, status: 502 };
     }
 
     const contentType = response.headers.get('content-type') ?? '';

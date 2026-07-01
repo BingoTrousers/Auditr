@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { fetchPage } from '@/lib/audit/fetchPage';
 import { validateUrl } from '@/lib/audit/validateUrl';
+import { detectBlocking } from '@/lib/audit/detectBlocking';
 import { parseMeta } from '@/lib/audit/parseMeta';
 import { parseHeadings } from '@/lib/audit/parseHeadings';
 import { parseImages } from '@/lib/audit/parseImages';
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
     const $ = cheerio.load(fetchResult.html);
 
     const checks = [
+      ...detectBlocking($, fetchResult.html),
       ...parseMeta($),
       ...parseHeadings($),
       ...parseImages($),

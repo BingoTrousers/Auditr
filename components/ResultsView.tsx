@@ -10,6 +10,7 @@ interface ResultsViewProps {
 }
 
 const GROUP_LABELS: Record<string, string> = {
+  access: 'Access & Bot Protection',
   meta: 'Meta Tags',
   headings: 'Headings',
   images: 'Images',
