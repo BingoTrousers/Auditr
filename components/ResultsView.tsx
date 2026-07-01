@@ -45,8 +45,7 @@ export default function ResultsView({ result }: ResultsViewProps) {
 
       <div className="flex flex-col gap-3.5">
         {Array.from(groups.entries()).map(([group, checks]) => {
-          const hasFail = checks.some((check) => check.status === 'fail');
-          const expanded = expandedOverrides[group] ?? hasFail;
+          const expanded = expandedOverrides[group] ?? true;
 
           return (
             <div key={group} className="overflow-hidden rounded-[14px] border border-line bg-surface">

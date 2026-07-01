@@ -4,10 +4,11 @@
 
 /*
  * Design tokens pulled 1:1 from the Claude Design "Next.js SEO Audit Design
- * System" project (DesignTokens.dc.html). Light theme is the default;
- * dark theme mirrors the design's `dark` state via prefers-color-scheme,
- * since the design's manual light/dark toggle is a design-tool affordance,
- * not a feature of this app.
+ * System" project (DesignTokens.dc.html). Light theme is the default.
+ * Dark theme applies when the system prefers it (unless the user picked
+ * "light" explicitly) or when the manual toggle (ThemeToggle) sets the
+ * `dark` class on <html> — see the inline script in app/layout.tsx that
+ * applies the stored choice before first paint to avoid a flash.
  */
 :root {
   --canvas: #f7f7f8;
@@ -39,7 +40,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --canvas: #101012;
     --surface: #18181b;
     --surface-2: #1e1e22;
@@ -67,6 +68,35 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
+}
+
+:root.dark {
+  --canvas: #101012;
+  --surface: #18181b;
+  --surface-2: #1e1e22;
+  --border: #2a2a2e;
+  --border-strong: #38383e;
+  --text-1: #f4f4f5;
+  --text-2: #a1a1aa;
+  --text-3: #6c6c74;
+  --accent: #5b9dff;
+  --accent-hover: #7db0ff;
+  --accent-tint: rgba(91, 157, 255, 0.14);
+  --accent-tint-border: rgba(91, 157, 255, 0.32);
+  --pass-text: #4ade80;
+  --pass-bg: rgba(34, 197, 94, 0.14);
+  --pass-border: rgba(34, 197, 94, 0.32);
+  --pass-dot: #4ade80;
+  --warn-text: #fbbf24;
+  --warn-bg: rgba(245, 158, 11, 0.14);
+  --warn-border: rgba(245, 158, 11, 0.32);
+  --warn-dot: #fbbf24;
+  --fail-text: #f87171;
+  --fail-bg: rgba(239, 68, 68, 0.14);
+  --fail-border: rgba(239, 68, 68, 0.32);
+  --fail-dot: #f87171;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 html,

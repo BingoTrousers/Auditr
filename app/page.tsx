@@ -4,9 +4,8 @@ import { useState } from 'react';
 import UrlForm from '@/components/UrlForm';
 import ResultsView from '@/components/ResultsView';
 import ErrorAlert from '@/components/ErrorAlert';
+import ThemeToggle from '@/components/ThemeToggle';
 import type { AuditResult } from '@/lib/types';
-
-const CATEGORY_CHIPS = ['Meta Tags', 'Headings', 'Images', 'Links'];
 
 interface AuditError {
   message: string;
@@ -49,11 +48,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-canvas">
-      <header className="mx-auto max-w-[920px] px-8 pb-10 pt-7">
+      <header className="mx-auto flex max-w-[920px] items-center justify-between px-8 pb-10 pt-7">
         <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 shrink-0 rounded-lg bg-accent" />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.5" y2="16.5" />
+            </svg>
+          </div>
           <span className="font-sans text-[17px] font-extrabold tracking-tight text-ink-1">SEO Audit</span>
         </div>
+        <ThemeToggle />
       </header>
 
       <div className="mx-auto max-w-[640px] px-8 pb-24">
@@ -65,17 +70,6 @@ export default function Home() {
         </div>
 
         <UrlForm onSubmit={runAudit} loading={loading} />
-
-        <div className="mt-7 flex flex-wrap justify-center gap-2">
-          {CATEGORY_CHIPS.map((chip) => (
-            <span
-              key={chip}
-              className="whitespace-nowrap rounded-full border border-line bg-surface px-[13px] py-1.5 font-sans text-xs font-semibold text-ink-2"
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
 
         {error && (
           <div className="mt-8">
