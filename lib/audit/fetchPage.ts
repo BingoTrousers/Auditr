@@ -1,3 +1,6 @@
+import { Agent, fetch as undiciFetch, type Response as UndiciResponse } from 'undici';
+import { isIP, type LookupFunction } from 'node:net';
+import type { LookupAddress } from 'node:dns';
 import { validateUrl } from './validateUrl';
 
 const TIMEOUT_MS = 10_000;
@@ -20,7 +23,39 @@ export interface FetchPageFailure {
 
 export type FetchPageResult = FetchPageSuccess | FetchPageFailure;
 
-async function readBodyWithLimit(response: Response): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+/**
+ * Builds a `net.connect`-compatible `lookup` function that ignores DNS
+ * entirely and resolves only to the IP addresses we already validated for
+ * this exact hostname. This pins the TCP connection to the validated IP,
+ * closing the DNS-rebinding gap where a fresh lookup performed by the fetch
+ * implementation itself could return a different (attacker-controlled,
+ * internal) address after `validateUrl` already approved the hostname.
+ */
+function createPinnedLookup(hostname: string, resolvedIps: string[]): LookupFunction {
+  return ((lookupHostname: string, options: unknown, callback: unknown): void => {
+    const cb = (typeof options === 'function' ? options : callback) as (
+      err: NodeJS.ErrnoException | null,
+      address: string | LookupAddress[],
+      family?: number,
+    ) => void;
+    const wantsAll = typeof options === 'object' && options !== null && (options as { all?: boolean }).all === true;
+
+    if (lookupHostname !== hostname) {
+      cb(new Error('Unexpected hostname during connection') as NodeJS.ErrnoException, '');
+      return;
+    }
+
+    const addresses: LookupAddress[] = resolvedIps.map((address) => ({ address, family: isIP(address) }));
+
+    if (wantsAll) {
+      cb(null, addresses);
+    } else {
+      cb(null, addresses[0].address, addresses[0].family);
+    }
+  }) as LookupFunction;
+}
+
+async function readBodyWithLimit(response: UndiciResponse): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   const reader = response.body?.getReader();
 
   if (!reader) {
@@ -69,14 +104,23 @@ export async function fetchPage(url: string): Promise<FetchPageResult> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    let response: Response;
+    // Pin the TCP connection to the IP(s) validateUrl just approved, rather
+    // than letting the fetch implementation perform its own DNS lookup
+    // (which would be vulnerable to DNS rebinding between validation and
+    // connection time).
+    const dispatcher = new Agent({
+      connect: { lookup: createPinnedLookup(validation.hostname, validation.resolvedIps) },
+    });
+
+    let response: UndiciResponse;
     try {
-      response = await fetch(currentUrl, {
+      response = await undiciFetch(currentUrl, {
         redirect: 'manual',
         signal: controller.signal,
         headers: {
           'User-Agent': USER_AGENT,
         },
+        dispatcher,
       });
     } catch (err) {
       clearTimeout(timeout);
