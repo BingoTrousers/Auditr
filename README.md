@@ -11,8 +11,9 @@ A stateless SEO audit tool built with Next.js 14 (App Router) and TypeScript. Pa
   - **Images**: alt text coverage
   - **Links**: internal vs. external link counts
 - Aggregate 0-100 score with a simple, extensible weighting system
-- SSRF protection: resolved-IP validation (not just URL string matching), manual redirect handling with per-hop re-validation, response size cap, request timeout
+- SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout
 - In-memory per-IP rate limiting (~5 requests/minute)
+- Deliberately unindexed: `app/robots.ts` disallows all crawlers, every response sends `X-Robots-Tag: noindex, nofollow`, and page metadata sets `robots: noindex, nofollow`
 
 ## Getting Started
 
