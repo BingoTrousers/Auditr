@@ -56,14 +56,14 @@ export default function Home() {
               <line x1="21" y1="21" x2="16.5" y2="16.5" />
             </svg>
           </div>
-          <span className="font-sans text-[17px] font-extrabold tracking-tight text-ink-1">SEO Audit</span>
+          <span className="font-sans text-[17px] font-extrabold tracking-tight text-ink-1">Auditr</span>
         </div>
         <ThemeToggle />
       </header>
 
       <div className="mx-auto max-w-[640px] px-8 pb-24">
         <div className="mb-10 text-center">
-          <h1 className="mb-3 font-sans text-[34px] font-extrabold tracking-tight text-ink-1">SEO Audit Tool</h1>
+          <h1 className="mb-3 font-sans text-[34px] font-extrabold tracking-tight text-ink-1">Auditr</h1>
           <p className="font-sans text-base leading-relaxed text-ink-2">
             Enter a URL to run a quick, one-off SEO audit.
           </p>

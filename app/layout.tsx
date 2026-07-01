@@ -17,7 +17,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SEO Audit Tool',
+  title: 'Auditr',
   description: 'Run a quick, stateless SEO audit on any public URL.',
   robots: {
     index: false,

@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-A stateless Next.js 14 (App Router, TypeScript) SEO audit tool. Single POST endpoint fetches a URL server-side, parses it with cheerio, runs a fixed set of on-page checks, and returns a scored JSON result. No database, no auth, no persistence — every request is self-contained.
+**Auditr** — a stateless Next.js 14 (App Router, TypeScript) SEO audit tool. Single POST endpoint fetches a URL server-side, parses it with cheerio, runs a fixed set of on-page checks, and returns a scored JSON result. No database, no auth, no persistence — every request is self-contained.
 
 ## Architecture
 

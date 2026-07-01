@@ -1,4 +1,4 @@
-# SEO Audit Tool
+# Auditr
 
 A stateless SEO audit tool built with Next.js 14 (App Router) and TypeScript. Paste a URL, get an instant on-page SEO score and a breakdown of checks — no database, no auth, nothing persisted.
 
