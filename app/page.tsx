@@ -5,6 +5,7 @@ import UrlForm from '@/components/UrlForm';
 import ResultsView from '@/components/ResultsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getPreviousResult, saveResult, type AuditHistoryEntry } from '@/lib/audit/auditHistory';
 import type { AuditResult } from '@/lib/types';
 
 interface AuditError {
@@ -15,6 +16,7 @@ interface AuditError {
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
+  const [previousResult, setPreviousResult] = useState<AuditHistoryEntry | null>(null);
   const [error, setError] = useState<AuditError | null>(null);
   const [lastUrl, setLastUrl] = useState('');
 
@@ -23,6 +25,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setPreviousResult(null);
 
     try {
       const response = await fetch('/api/audit', {
@@ -38,6 +41,8 @@ export default function Home() {
         return;
       }
 
+      setPreviousResult(getPreviousResult(url));
+      saveResult(url, data as AuditResult);
       setResult(data as AuditResult);
     } catch {
       setError({ message: 'Could not reach the audit service. Please try again.', status: 0 });
@@ -100,7 +105,7 @@ export default function Home() {
 
       {result && (
         <div className="mx-auto max-w-[760px] px-8 pb-24">
-          <ResultsView result={result} />
+          <ResultsView result={result} previous={previousResult} />
         </div>
       )}
     </main>

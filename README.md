@@ -15,7 +15,7 @@ A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript
   - **Server-Side Rendering** *(Technical)*: heuristic check for whether key content is visible without executing JavaScript, plus login/paywall-gate detection
   - **AI-Citability (GEO)** *(Content)*: answer-first opening structure, heading-as-question phrasing, and data/statistic density — signals that improve how likely a page is to be cited by AI answer engines
   - **Structured Data & Freshness** *(Technical)*: JSON-LD schema presence/validity (FAQPage/Article/Product) and last-updated/`dateModified` freshness signals
-- Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Quick Wins" + per-group "+N pts available" badges)
+- Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Biggest Wins" + per-group "+N pts available" badges)
 - SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout — applied uniformly to the main page fetch and the robots.txt/llms.txt fetches
 - In-memory per-IP rate limiting (~5 requests/minute)
 - Deliberately unindexed: `app/robots.ts` disallows all crawlers, every response sends `X-Robots-Tag: noindex, nofollow`, and page metadata sets `robots: noindex, nofollow`
@@ -71,7 +71,7 @@ components/
   UrlForm.tsx              URL input + validation + loading state
   ScoreCard.tsx            Overall score, color-coded band (Good/Needs Work/Poor)
   AuditSection.tsx         Single check row (label, status badge, message)
-  ResultsView.tsx          Composes ScoreCard + Content/Technical tabs + sort control + Quick Wins + grouped, collapsible AuditSections
+  ResultsView.tsx          Composes ScoreCard + Content/Technical tabs + sort control + Biggest Wins + grouped, collapsible AuditSections
   ErrorAlert.tsx           Status-aware error banner (rate limit / fetch failure / server error)
   ThemeToggle.tsx          Manual light/dark switch (class + localStorage)
 lib/

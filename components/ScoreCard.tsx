@@ -1,6 +1,8 @@
 interface ScoreCardProps {
   score: number;
   url: string;
+  contentScore?: number | null;
+  technicalScore?: number | null;
 }
 
 const BANDS = {
@@ -30,9 +32,14 @@ function getBand(score: number) {
   return BANDS.poor;
 }
 
-export default function ScoreCard({ score, url }: ScoreCardProps) {
+export default function ScoreCard({ score, url, contentScore, technicalScore }: ScoreCardProps) {
   const band = getBand(score);
   const clamped = Math.max(0, Math.min(100, score));
+
+  const subScores = [
+    { label: 'Content', value: contentScore },
+    { label: 'Technical', value: technicalScore },
+  ].filter((entry): entry is { label: string; value: number } => typeof entry.value === 'number');
 
   return (
     <div className="rounded-2xl border border-line bg-surface px-8 py-7">
@@ -53,6 +60,16 @@ export default function ScoreCard({ score, url }: ScoreCardProps) {
       <div className="h-2 overflow-hidden rounded-full bg-line">
         <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${clamped}%` }} />
       </div>
+
+      {subScores.length > 0 && (
+        <div className="mt-3 flex gap-4">
+          {subScores.map(({ label, value }) => (
+            <span key={label} className="font-sans text-xs text-ink-3">
+              {label} <span className="font-mono font-semibold text-ink-2">{value}/100</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

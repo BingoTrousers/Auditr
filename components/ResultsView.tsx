@@ -2,24 +2,18 @@
 
 import { useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import type { AuditCheck, AuditResult } from '@/lib/types';
+import { GROUP_LABELS } from '@/lib/audit/groupLabels';
+import type { AuditHistoryEntry } from '@/lib/audit/auditHistory';
+import { FOCUS_RING, FOCUS_RING_INSET } from './focusRing';
 import ScoreCard from './ScoreCard';
 import AuditSection from './AuditSection';
+import ExportToolbar from './ExportToolbar';
+import CompareSummary from './CompareSummary';
 
 interface ResultsViewProps {
   result: AuditResult;
+  previous?: AuditHistoryEntry | null;
 }
-
-const GROUP_LABELS: Record<string, string> = {
-  access: 'Access & Bot Protection',
-  meta: 'Meta Tags',
-  headings: 'Headings',
-  images: 'Images',
-  links: 'Links',
-  'ai-access': 'AI Crawler Access',
-  rendering: 'Server-Side Rendering',
-  'geo-content': 'AI-Citability (GEO)',
-  'structured-data': 'Structured Data & Freshness',
-};
 
 type Tab = 'content' | 'technical';
 
@@ -42,13 +36,6 @@ const TABS: { tab: Tab; label: string }[] = [
   { tab: 'content', label: 'Content' },
   { tab: 'technical', label: 'Technical' },
 ];
-
-// Every custom interactive element replaces the browser's default outline
-// with a ring so it stays visible on rounded pills; INSET is used wherever
-// the element sits inside an `overflow-hidden` ancestor (a plain ring would
-// otherwise get clipped and disappear for keyboard users).
-const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
-const FOCUS_RING_INSET = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent';
 
 /** Respects the user's OS-level motion preference for programmatic scrolling. */
 function prefersReducedMotion(): boolean {
@@ -163,7 +150,7 @@ function GainBadge({ potentialGain }: { potentialGain: number }) {
   );
 }
 
-export default function ResultsView({ result }: ResultsViewProps) {
+export default function ResultsView({ result, previous }: ResultsViewProps) {
   const [expandedOverrides, setExpandedOverrides] = useState<Record<string, boolean>>({});
   const [sortMode, setSortMode] = useState<SortMode>('opportunity');
   const [activeTab, setActiveTab] = useState<Tab>('content');
@@ -180,6 +167,14 @@ export default function ResultsView({ result }: ResultsViewProps) {
 
   const breakdownByGroup = new Map(result.breakdown.map((entry) => [entry.group, entry]));
   const totalPotentialGain = result.breakdown.reduce((sum, entry) => sum + entry.potentialGain, 0);
+
+  const tabScore = (tab: Tab) => {
+    const entries = result.breakdown.filter((entry) => (GROUP_TAB[entry.group] ?? 'technical') === tab);
+    const weight = entries.reduce((sum, entry) => sum + entry.weight, 0);
+    if (weight === 0) return null;
+    const score = entries.reduce((sum, entry) => sum + entry.score, 0);
+    return Math.round((score / weight) * 100);
+  };
   const topOpportunities = [...result.breakdown]
     .filter((entry) => entry.potentialGain > 0)
     .sort((a, b) => b.potentialGain - a.potentialGain)
@@ -213,14 +208,16 @@ export default function ResultsView({ result }: ResultsViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <ScoreCard score={result.score} url={result.url} />
+      <ScoreCard score={result.score} url={result.url} contentScore={tabScore('content')} technicalScore={tabScore('technical')} />
+
+      {previous && <CompareSummary current={result} previous={previous} />}
 
       {wafCheck && <WafWarningBanner message={wafCheck.message} onJump={() => jumpToGroup('access')} />}
 
       {totalPotentialGain > 0 && (
         <div className="rounded-2xl border border-accent-tintBorder bg-accent-tint px-6 py-5 shadow-card">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-sans text-[13px] font-bold uppercase tracking-[0.06em] text-accent">Quick Wins</h2>
+            <h2 className="font-sans text-[13px] font-bold uppercase tracking-[0.06em] text-accent">Biggest Wins</h2>
             <span className="font-mono text-lg font-bold text-accent">
               +{totalPotentialGain} <span className="text-sm font-medium">pts available</span>
             </span>
@@ -380,6 +377,8 @@ export default function ResultsView({ result }: ResultsViewProps) {
           );
         })}
       </div>
+
+      <ExportToolbar result={result} />
     </div>
   );
 }
