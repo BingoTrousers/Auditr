@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import type { AuditCheck, AuditResult } from '@/lib/types';
 import ScoreCard from './ScoreCard';
 import AuditSection from './AuditSection';
@@ -42,6 +42,43 @@ const TABS: { tab: Tab; label: string }[] = [
   { tab: 'content', label: 'Content' },
   { tab: 'technical', label: 'Technical' },
 ];
+
+// Every custom interactive element replaces the browser's default outline
+// with a ring so it stays visible on rounded pills; INSET is used wherever
+// the element sits inside an `overflow-hidden` ancestor (a plain ring would
+// otherwise get clipped and disappear for keyboard users).
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+const FOCUS_RING_INSET = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent';
+
+/** Respects the user's OS-level motion preference for programmatic scrolling. */
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * Moves both focus and selection within a single-select horizontal button
+ * group (WAI-ARIA "roving tabindex"), per the APG Tabs/Radio Group patterns:
+ * Left/Right (and Home/End) move focus, and selection follows focus.
+ */
+function handleRovingKeyDown(
+  event: KeyboardEvent<HTMLButtonElement>,
+  index: number,
+  count: number,
+  refs: MutableRefObject<(HTMLButtonElement | null)[]>,
+  select: (nextIndex: number) => void,
+) {
+  let nextIndex: number | null = null;
+  if (event.key === 'ArrowRight') nextIndex = (index + 1) % count;
+  else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + count) % count;
+  else if (event.key === 'Home') nextIndex = 0;
+  else if (event.key === 'End') nextIndex = count - 1;
+
+  if (nextIndex !== null) {
+    event.preventDefault();
+    select(nextIndex);
+    refs.current[nextIndex]?.focus();
+  }
+}
 
 function Summary({ checks }: { checks: AuditCheck[] }) {
   const counts = { pass: 0, warning: 0, fail: 0 };
@@ -86,8 +123,11 @@ const SORT_OPTIONS: { mode: SortMode; label: string }[] = [
 
 function WafWarningBanner({ message, onJump }: { message: string; onJump: () => void }) {
   return (
-    <div className="flex items-start gap-3.5 rounded-xl border border-warn-border bg-warn-bg px-[18px] py-4">
-      <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-warn-text font-sans text-[13px] font-extrabold text-white">
+    <div role="status" className="flex items-start gap-3.5 rounded-xl border border-warn-border bg-warn-bg px-[18px] py-4">
+      <span
+        aria-hidden="true"
+        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-warn-text font-sans text-[13px] font-extrabold text-white"
+      >
         !
       </span>
       <div className="flex-1">
@@ -98,7 +138,7 @@ function WafWarningBanner({ message, onJump }: { message: string; onJump: () => 
         <button
           type="button"
           onClick={onJump}
-          className="mt-3 rounded-lg border border-warn-border bg-transparent px-4 py-2 font-sans text-[13px] font-bold text-warn-text"
+          className={`mt-3 rounded-lg border border-warn-border bg-transparent px-4 py-2 font-sans text-[13px] font-bold text-warn-text ${FOCUS_RING}`}
         >
           View details
         </button>
@@ -128,6 +168,8 @@ export default function ResultsView({ result }: ResultsViewProps) {
   const [sortMode, setSortMode] = useState<SortMode>('opportunity');
   const [activeTab, setActiveTab] = useState<Tab>('content');
   const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const sortRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const groups = new Map<string, AuditCheck[]>();
   for (const check of result.checks) {
@@ -163,7 +205,7 @@ export default function ResultsView({ result }: ResultsViewProps) {
     setActiveTab(GROUP_TAB[group] ?? 'technical');
     setExpandedOverrides((prev) => ({ ...prev, [group]: true }));
     requestAnimationFrame(() => {
-      groupRefs.current[group]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      groupRefs.current[group]?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
     });
   }
 
@@ -178,7 +220,7 @@ export default function ResultsView({ result }: ResultsViewProps) {
       {totalPotentialGain > 0 && (
         <div className="rounded-2xl border border-accent-tintBorder bg-accent-tint px-6 py-5 shadow-card">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <span className="font-sans text-[13px] font-bold uppercase tracking-[0.06em] text-accent">Quick Wins</span>
+            <h2 className="font-sans text-[13px] font-bold uppercase tracking-[0.06em] text-accent">Quick Wins</h2>
             <span className="font-mono text-lg font-bold text-accent">
               +{totalPotentialGain} <span className="text-sm font-medium">pts available</span>
             </span>
@@ -189,7 +231,7 @@ export default function ResultsView({ result }: ResultsViewProps) {
                 key={entry.group}
                 type="button"
                 onClick={() => jumpToGroup(entry.group)}
-                className="inline-flex items-baseline gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 font-sans text-xs font-semibold text-ink-1 transition hover:border-accent hover:shadow-cardHover"
+                className={`inline-flex items-baseline gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 font-sans text-xs font-semibold text-ink-1 transition hover:border-accent hover:shadow-cardHover ${FOCUS_RING}`}
               >
                 {GROUP_LABELS[entry.group] ?? entry.group}
                 <span className="font-mono font-semibold text-accent">+{entry.potentialGain}</span>
@@ -199,16 +241,25 @@ export default function ResultsView({ result }: ResultsViewProps) {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-line">
-        {TABS.map(({ tab, label }) => {
+      <div role="tablist" aria-label="Result category" className="flex gap-2 border-b border-line">
+        {TABS.map(({ tab, label }, index) => {
           const gain = tabGain(tab);
           const active = activeTab === tab;
           return (
             <button
               key={tab}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
               type="button"
+              role="tab"
+              id={`tab-${tab}`}
+              aria-selected={active}
+              aria-controls={`tabpanel-${tab}`}
+              tabIndex={active ? 0 : -1}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 font-sans text-sm font-bold transition ${
+              onKeyDown={(e) => handleRovingKeyDown(e, index, TABS.length, tabRefs, (i) => setActiveTab(TABS[i].tab))}
+              className={`flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-2.5 font-sans text-sm font-bold transition ${FOCUS_RING} ${
                 active ? 'border-accent text-ink-1' : 'border-transparent text-ink-3 hover:text-ink-1'
               }`}
             >
@@ -228,30 +279,43 @@ export default function ResultsView({ result }: ResultsViewProps) {
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="font-sans text-[13px] font-semibold text-ink-3">Sort by</span>
-        <div className="inline-flex rounded-full border border-line bg-surface p-0.5">
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.mode}
-              type="button"
-              onClick={() => setSortMode(option.mode)}
-              className={`rounded-full px-3 py-1.5 font-sans text-xs font-semibold transition ${
-                sortMode === option.mode
-                  ? 'bg-accent-tint text-accent'
-                  : 'text-ink-3 hover:text-ink-1'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        <span id="sort-by-label" className="font-sans text-[13px] font-semibold text-ink-3">
+          Sort by
+        </span>
+        <div role="radiogroup" aria-labelledby="sort-by-label" className="inline-flex rounded-full border border-line bg-surface p-0.5">
+          {SORT_OPTIONS.map((option, index) => {
+            const active = sortMode === option.mode;
+            return (
+              <button
+                key={option.mode}
+                ref={(el) => {
+                  sortRefs.current[index] = el;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                tabIndex={active ? 0 : -1}
+                onClick={() => setSortMode(option.mode)}
+                onKeyDown={(e) =>
+                  handleRovingKeyDown(e, index, SORT_OPTIONS.length, sortRefs, (i) => setSortMode(SORT_OPTIONS[i].mode))
+                }
+                className={`rounded-full px-3 py-1.5 font-sans text-xs font-semibold transition ${FOCUS_RING} ${
+                  active ? 'bg-accent-tint text-accent' : 'text-ink-3 hover:text-ink-1'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="flex flex-col gap-3.5">
+      <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="flex flex-col gap-3.5">
         {sortedGroups.map(([group, checks]) => {
           const expanded = expandedOverrides[group] ?? false;
           const groupScore = breakdownByGroup.get(group);
           const ratio = groupScore && groupScore.weight > 0 ? groupScore.score / groupScore.weight : 0;
+          const panelId = `group-panel-${group}`;
 
           return (
             <div
@@ -261,39 +325,47 @@ export default function ResultsView({ result }: ResultsViewProps) {
               }}
               className="scroll-mt-4 overflow-hidden rounded-[14px] border border-line bg-surface"
             >
-              <button
-                type="button"
-                onClick={() => setExpandedOverrides((prev) => ({ ...prev, [group]: !expanded }))}
-                className="flex w-full flex-col gap-3 px-5 py-4 text-left"
-              >
-                <span className="flex items-center justify-between gap-4">
-                  <span className="flex items-center gap-2.5">
-                    <span className="inline-block w-3.5 font-sans text-sm text-ink-3">{expanded ? '▾' : '▸'}</span>
-                    <span className="font-sans text-lg font-extrabold tracking-tight text-ink-1">{GROUP_LABELS[group] ?? group}</span>
+              <h3 className="contents">
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  aria-controls={panelId}
+                  onClick={() => setExpandedOverrides((prev) => ({ ...prev, [group]: !expanded }))}
+                  className={`flex w-full flex-col gap-3 px-5 py-4 text-left ${FOCUS_RING_INSET}`}
+                >
+                  <span className="flex items-center justify-between gap-4">
+                    <span className="flex items-center gap-2.5">
+                      <span aria-hidden="true" className="inline-block w-3.5 font-sans text-sm text-ink-3">
+                        {expanded ? '▾' : '▸'}
+                      </span>
+                      <span className="font-sans text-lg font-extrabold tracking-tight text-ink-1">
+                        {GROUP_LABELS[group] ?? group}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      <Summary checks={checks} />
+                      {groupScore && <GainBadge potentialGain={groupScore.potentialGain} />}
+                    </span>
                   </span>
-                  <span className="flex items-center gap-3">
-                    <Summary checks={checks} />
-                    {groupScore && <GainBadge potentialGain={groupScore.potentialGain} />}
-                  </span>
-                </span>
 
-                {groupScore && (
-                  <span className="flex items-center gap-2 pl-6">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-                      <span
-                        className={`block h-full rounded-full transition-all ${barBand(ratio)}`}
-                        style={{ width: `${Math.round(ratio * 100)}%` }}
-                      />
+                  {groupScore && (
+                    <span className="flex items-center gap-2 pl-6">
+                      <span aria-hidden="true" className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+                        <span
+                          className={`block h-full rounded-full transition-all ${barBand(ratio)}`}
+                          style={{ width: `${Math.round(ratio * 100)}%` }}
+                        />
+                      </span>
+                      <span className="font-mono text-[11px] font-medium text-ink-3">
+                        {groupScore.score}/{groupScore.weight}
+                      </span>
                     </span>
-                    <span className="font-mono text-[11px] font-medium text-ink-3">
-                      {groupScore.score}/{groupScore.weight}
-                    </span>
-                  </span>
-                )}
-              </button>
+                  )}
+                </button>
+              </h3>
 
               {expanded && (
-                <div>
+                <div id={panelId}>
                   {checks.map((check, index) => (
                     <AuditSection
                       key={`${check.label}-${index}`}

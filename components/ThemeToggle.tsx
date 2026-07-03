@@ -21,7 +21,9 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3.5 py-2 font-sans text-xs font-semibold text-ink-1"
+      aria-pressed={dark}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3.5 py-2 font-sans text-xs font-semibold text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
     >
       {dark ? 'Light mode' : 'Dark mode'}
     </button>

@@ -38,10 +38,14 @@ export default function UrlForm({ onSubmit, loading }: UrlFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
+    <form onSubmit={handleSubmit} noValidate className="flex items-start gap-2.5">
       <div className="flex-1">
+        <label htmlFor="audit-url" className="sr-only">
+          Website URL to audit
+        </label>
         <input
-          type="text"
+          id="audit-url"
+          type="url"
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
@@ -49,16 +53,22 @@ export default function UrlForm({ onSubmit, loading }: UrlFormProps) {
           }}
           disabled={loading}
           placeholder="https://example.com"
-          className={`w-full rounded-[10px] border bg-surface px-4 py-[13px] font-sans text-[15px] text-ink-1 outline-none disabled:opacity-60 ${
+          aria-invalid={fieldError ? true : undefined}
+          aria-describedby={fieldError ? 'url-field-error' : undefined}
+          className={`w-full rounded-[10px] border bg-surface px-4 py-[13px] font-sans text-[15px] text-ink-1 outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 ${
             fieldError ? 'border-fail-border' : 'border-lineStrong'
           }`}
         />
-        {fieldError && <div className="mt-2 font-sans text-[13px] text-fail-text">{fieldError}</div>}
+        {fieldError && (
+          <div id="url-field-error" className="mt-2 font-sans text-[13px] text-fail-text">
+            {fieldError}
+          </div>
+        )}
       </div>
       <button
         type="submit"
         disabled={loading}
-        className={`whitespace-nowrap rounded-[10px] px-[22px] py-[13px] font-sans text-[15px] font-bold text-white transition-colors ${
+        className={`whitespace-nowrap rounded-[10px] px-[22px] py-[13px] font-sans text-[15px] font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${
           loading ? 'cursor-default bg-lineStrong' : 'cursor-pointer bg-accent hover:bg-accent-hover'
         }`}
       >

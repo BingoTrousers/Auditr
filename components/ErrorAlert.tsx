@@ -51,7 +51,7 @@ export default function ErrorAlert({ status, message, onRetry }: ErrorAlertProps
           <button
             type="button"
             onClick={onRetry}
-            className={`mt-3 rounded-lg border bg-transparent px-4 py-2 font-sans text-[13px] font-bold ${styles.retry}`}
+            className={`mt-3 rounded-lg border bg-transparent px-4 py-2 font-sans text-[13px] font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${styles.retry}`}
           >
             Retry
           </button>

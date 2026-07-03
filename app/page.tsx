@@ -51,7 +51,17 @@ export default function Home() {
       <header className="mx-auto flex max-w-[920px] items-center justify-between px-8 pb-10 pt-7">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7" />
               <line x1="21" y1="21" x2="16.5" y2="16.5" />
             </svg>
@@ -70,6 +80,12 @@ export default function Home() {
         </div>
 
         <UrlForm onSubmit={runAudit} loading={loading} />
+
+        <div aria-live="polite" className="sr-only">
+          {loading && 'Running audit…'}
+          {error && `Audit failed: ${error.message}`}
+          {result && `Audit complete. Score: ${result.score} out of 100.`}
+        </div>
 
         {error && (
           <div className="mt-8">
