@@ -1,20 +1,25 @@
 # Auditr
 
-A stateless SEO audit tool built with Next.js 14 (App Router) and TypeScript. Paste a URL, get an instant on-page SEO score and a breakdown of checks — no database, no auth, nothing persisted.
+A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript. Paste a URL, get an instant on-page score, a breakdown of checks, and exactly how many points you'd recover by fixing each area — no database, no auth, nothing persisted.
 
 ## Features
 
 - Server-side fetch of the target page (avoids CORS, keeps the check consistent regardless of client)
-- On-page checks via [cheerio](https://cheerio.js.org/):
-  - **Access & Bot Protection**: flags when the fetched page looks like a WAF/bot-protection challenge page (Cloudflare, Akamai, Imperva/Incapsula, PerimeterX, DataDome, etc.) rather than real content, so a misleadingly bad score doesn't go unexplained
-  - **Meta**: title tag, meta description, canonical link, robots meta tag
-  - **Headings**: H1 presence/uniqueness, skipped heading levels (H1→H2→H3)
-  - **Images**: alt text coverage
-  - **Links**: internal vs. external link counts
-- Aggregate 0-100 score with a simple, extensible weighting system
-- SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout
+- On-page checks via [cheerio](https://cheerio.js.org/), grouped under **Content** and **Technical** tabs in the UI:
+  - **Access & Bot Protection** *(Technical)*: flags when the fetched page looks like a WAF/bot-protection challenge page (Cloudflare, Akamai, Imperva/Incapsula, PerimeterX, DataDome, etc.) rather than real content, so a misleadingly bad score doesn't go unexplained
+  - **Meta** *(Content)*: title tag, meta description, canonical link, robots meta tag
+  - **Headings** *(Content)*: H1 presence/uniqueness, skipped heading levels (H1→H2→H3)
+  - **Images** *(Content)*: alt text coverage
+  - **Links** *(Technical)*: internal vs. external link counts
+  - **AI Crawler Access** *(Technical)*: parses robots.txt for blanket blocks against major AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, and more), and checks for an `llms.txt` file
+  - **Server-Side Rendering** *(Technical)*: heuristic check for whether key content is visible without executing JavaScript, plus login/paywall-gate detection
+  - **AI-Citability (GEO)** *(Content)*: answer-first opening structure, heading-as-question phrasing, and data/statistic density — signals that improve how likely a page is to be cited by AI answer engines
+  - **Structured Data & Freshness** *(Technical)*: JSON-LD schema presence/validity (FAQPage/Article/Product) and last-updated/`dateModified` freshness signals
+- Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Quick Wins" + per-group "+N pts available" badges)
+- SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout — applied uniformly to the main page fetch and the robots.txt/llms.txt fetches
 - In-memory per-IP rate limiting (~5 requests/minute)
 - Deliberately unindexed: `app/robots.ts` disallows all crawlers, every response sends `X-Robots-Tag: noindex, nofollow`, and page metadata sets `robots: noindex, nofollow`
+- Accessible by default: real WAI-ARIA tab/radiogroup patterns with keyboard navigation, visible focus rings (including on elements inside `overflow-hidden` containers), proper heading structure for screen-reader navigation, and `prefers-reduced-motion` support
 
 ## Getting Started
 
@@ -41,6 +46,9 @@ Success (200):
   "score": 70,
   "checks": [
     { "label": "Title Tag", "status": "warning", "message": "...", "group": "meta" }
+  ],
+  "breakdown": [
+    { "group": "meta", "weight": 12, "score": 6, "potentialGain": 6 }
   ]
 }
 ```
@@ -60,38 +68,43 @@ app/
   layout.tsx
   globals.css
 components/
-  UrlForm.tsx           URL input + validation + loading state
-  ScoreCard.tsx          Overall score, color-coded band (Good/Needs Work/Poor)
-  AuditSection.tsx       Single check row (label, status badge, message)
-  ResultsView.tsx        Composes ScoreCard + collapsible, grouped AuditSections
-  ErrorAlert.tsx          Status-aware error banner (rate limit / fetch failure / server error)
-  ThemeToggle.tsx         Manual light/dark switch (class + localStorage)
+  UrlForm.tsx              URL input + validation + loading state
+  ScoreCard.tsx            Overall score, color-coded band (Good/Needs Work/Poor)
+  AuditSection.tsx         Single check row (label, status badge, message)
+  ResultsView.tsx          Composes ScoreCard + Content/Technical tabs + sort control + Quick Wins + grouped, collapsible AuditSections
+  ErrorAlert.tsx           Status-aware error banner (rate limit / fetch failure / server error)
+  ThemeToggle.tsx          Manual light/dark switch (class + localStorage)
 lib/
-  audit/fetchPage.ts      SSRF-safe fetch with timeout, redirect handling, size cap, WAF header hint
-  audit/detectBlocking.ts WAF/bot-protection challenge-page detection (Cloudflare, Akamai, etc.)
-  audit/parseMeta.ts      Title/description/canonical/robots checks
-  audit/parseHeadings.ts  Heading structure checks
-  audit/parseImages.ts    Alt text coverage
-  audit/parseLinks.ts     Internal/external link counts
-  audit/scoreResults.ts   Aggregates checks into a 0-100 score
-  audit/rateLimiter.ts    In-memory per-IP rate limiter
-  audit/validateUrl.ts    SSRF protection (DNS-resolved IP validation)
-  types.ts                Shared AuditCheck / AuditResult types
+  audit/fetchResource.ts     Shared SSRF-safe fetch primitive (DNS pinning, redirect re-validation, size cap)
+  audit/fetchPage.ts         Main-page fetch: wraps fetchResource with content-type check + WAF header hint
+  audit/detectBlocking.ts    WAF/bot-protection challenge-page detection (Cloudflare, Akamai, etc.)
+  audit/parseMeta.ts         Title/description/canonical/robots checks
+  audit/parseHeadings.ts     Heading structure checks
+  audit/parseImages.ts       Alt text coverage
+  audit/parseLinks.ts        Internal/external link counts
+  audit/checkAiAccess.ts     robots.txt AI-crawler blocking + llms.txt presence (async, network call)
+  audit/checkRendering.ts    SSR/JS-gating heuristic + login/paywall detection
+  audit/parseGeoContent.ts   Answer-first structure, heading-as-question, data/statistic density
+  audit/parseStructuredData.ts  JSON-LD schema validation + freshness signals
+  audit/scoreResults.ts      Weighted-category scoring (GROUP_WEIGHTS → score + per-group breakdown)
+  audit/rateLimiter.ts       In-memory per-IP rate limiter
+  audit/validateUrl.ts       SSRF protection (DNS-resolved IP validation)
+  types.ts                   Shared AuditCheck / AuditResult / GroupScore types
 ```
 
 ## Notes on Production Use
 
 - The rate limiter and any per-instance state are in-memory only — they reset on cold starts/redeploys/multi-instance deployments. Acceptable for a low-traffic tool; swap in Redis/Upstash if stricter limits are needed.
 - `app/api/audit/route.ts` runs on the Node.js runtime (`export const runtime = 'nodejs'`), not Edge, since it uses `dns` and `cheerio`.
+- The Server-Side Rendering check is a heuristic (raw-HTML visible-text volume), not an actual headless-browser render — it can't perfectly distinguish "JS-gated content" from "unusually terse but fully server-rendered page."
 
 ## Design System
 
-Visual design (colors, type scale, spacing, component states) is sourced from the "Next.js SEO Audit Design System" project in Claude Design (`Home.dc.html`, `Results.dc.html`, `ErrorStates.dc.html`, `DesignTokens.dc.html`). Tokens live as CSS variables in `app/globals.css` and are exposed through `tailwind.config.ts` (`bg-canvas`, `text-ink-1/2/3`, `bg-pass-bg`/`warn`/`fail`, etc). Fonts are Manrope (UI/headings) and IBM Plex Mono (scores, counts, URLs), loaded via `next/font/google`. `app/icon.svg` provides the favicon and matches the header's magnifying-glass badge.
+Visual design (colors, type scale, spacing, component states) is sourced from the "Next.js SEO Audit Design System" project in Claude Design (`Home.dc.html`, `Results.dc.html`, `ErrorStates.dc.html`, `DesignTokens.dc.html`). Tokens live as CSS variables in `app/globals.css` and are exposed through `tailwind.config.ts` (`bg-canvas`, `text-ink-1/2/3`, `bg-pass-bg`/`warn`/`fail`, `bg-accent`/`accent-tint`, etc). Fonts are Manrope (UI/headings) and IBM Plex Mono (scores, counts, URLs), loaded via `next/font/google`. `app/icon.svg` provides the favicon and matches the header's magnifying-glass badge.
 
 Theme defaults to the system's `prefers-color-scheme`, overridable via the header's light/dark toggle (`ThemeToggle`), which persists the choice to `localStorage` and applies it via a `dark`/`light` class on `<html>` (set before hydration by a static inline script in `app/layout.tsx` to avoid a flash of the wrong theme).
 
-Two elements shown in the design were **not** implemented because they assume data this app doesn't produce:
-- Extended check groups for Performance, Structured Data, and Social Tags (shown behind a demo toggle in `Results.dc.html`) — the API only returns `meta`/`headings`/`images`/`links`.
+One element shown in the original design was **not** implemented because it implies a feature this app doesn't have:
 - A "compact score card for comparing URLs" variant, which implies a recent-audits history feature that doesn't exist here.
 
-If either becomes real (e.g. a PageSpeed API check, or persisted audit history), the styling patterns already exist in the source design to extend from.
+If that becomes real (e.g. persisted audit history), the styling patterns already exist in the source design to extend from.
