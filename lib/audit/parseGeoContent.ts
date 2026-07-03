@@ -36,10 +36,8 @@ function significantWords(text: string): Set<string> {
   );
 }
 
-function checkAnswerFirst($: CheerioAPI): AuditCheck {
+function checkAnswerFirst($: CheerioAPI, words: string[]): AuditCheck {
   const h1 = $('h1').first().text().trim() || $('title').first().text().trim();
-  const bodyText = getBodyText($);
-  const words = bodyText.split(/\s+/).filter(Boolean);
   const opening = words.slice(0, OPENING_WORD_COUNT).join(' ');
 
   if (!h1) {
@@ -130,10 +128,7 @@ function checkHeadingsAsQuestions($: CheerioAPI): AuditCheck {
   };
 }
 
-function checkDataDensity($: CheerioAPI): AuditCheck {
-  const bodyText = getBodyText($);
-  const wordCount = bodyText.split(/\s+/).filter(Boolean).length;
-
+function checkDataDensity(bodyText: string, wordCount: number): AuditCheck {
   if (wordCount < MIN_WORDS_FOR_DATA_CHECK) {
     return {
       label: 'Data & Statistic Density',
@@ -172,5 +167,12 @@ function checkDataDensity($: CheerioAPI): AuditCheck {
 }
 
 export function parseGeoContent($: CheerioAPI): AuditCheck[] {
-  return [checkAnswerFirst($), checkHeadingsAsQuestions($), checkDataDensity($)];
+  const bodyText = getBodyText($);
+  const words = bodyText.split(/\s+/).filter(Boolean);
+
+  return [
+    checkAnswerFirst($, words),
+    checkHeadingsAsQuestions($),
+    checkDataDensity(bodyText, words.length),
+  ];
 }

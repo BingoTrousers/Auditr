@@ -62,7 +62,9 @@ export async function POST(request: NextRequest) {
 
     const $ = cheerio.load(fetchResult.html);
 
-    const aiAccessChecks = await checkAiAccess(fetchResult.finalUrl);
+    // Kick off the robots.txt/llms.txt fetch concurrently with the
+    // synchronous parse checks below, since it doesn't depend on them.
+    const aiAccessPromise = checkAiAccess(fetchResult.finalUrl);
 
     const checks = [
       ...detectBlocking($, fetchResult.html),
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
       ...parseHeadings($),
       ...parseImages($),
       ...parseLinks($, fetchResult.finalUrl),
-      ...aiAccessChecks,
+      ...(await aiAccessPromise),
       ...checkRendering($),
       ...parseGeoContent($),
       ...parseStructuredData($),

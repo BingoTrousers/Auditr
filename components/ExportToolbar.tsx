@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AuditResult } from '@/lib/types';
 import {
   buildCsvReport,
@@ -68,6 +68,14 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
   const [status, setStatus] = useState<{ format: ExportFormat; state: 'copied' | 'error' } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Only the open panel's content is ever shown/copied, so build it once per
+  // (format, result) pair instead of re-running the formatter on every
+  // render for the preview, the copy button, and the mailto link.
+  const openContent = useMemo(() => {
+    if (!openFormat) return null;
+    return EXPORTS.find((e) => e.format === openFormat)?.build(result) ?? null;
+  }, [openFormat, result]);
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -89,14 +97,15 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
     <section className="rounded-2xl border border-line bg-surface p-5">
       <h2 className="mb-1 font-sans text-[13px] font-bold uppercase tracking-[0.06em] text-ink-3">Export &amp; Share</h2>
       <p className="mb-4 font-sans text-sm leading-relaxed text-ink-2">
-        Copy this audit in a format that fits your workflow. Preview a format to see exactly what gets copied.
+        Copy this audit in a format that fits your workflow.
       </p>
 
       <div className="flex flex-col gap-2">
-        {EXPORTS.map(({ format, label, description, build }) => {
+        {EXPORTS.map(({ format, label, description }) => {
           const isOpen = openFormat === format;
           const isActive = status?.format === format;
           const panelId = `export-panel-${format}`;
+          const content = isOpen ? openContent ?? '' : '';
 
           return (
             <div key={format} className="overflow-hidden rounded-xl border border-line">
@@ -121,12 +130,12 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
               {isOpen && (
                 <div id={panelId} className="border-t border-line px-4 py-3">
                   <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-canvas p-3 font-mono text-xs leading-relaxed text-ink-1">
-                    {build(result)}
+                    {content}
                   </pre>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => copyText(format, build(result))}
+                      onClick={() => copyText(format, content)}
                       className={`rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING} ${
                         isActive && status.state === 'error' ? 'border-fail-border text-fail-text' : ''
                       } ${isActive && status.state === 'copied' ? 'border-pass-border text-pass-text' : ''}`}
@@ -135,7 +144,7 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
                     </button>
                     {format === 'email' && (
                       <a
-                        href={`mailto:?subject=${encodeURIComponent(buildEmailSubject(result))}&body=${encodeURIComponent(build(result))}`}
+                        href={`mailto:?subject=${encodeURIComponent(buildEmailSubject(result))}&body=${encodeURIComponent(content)}`}
                         className={`rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING}`}
                       >
                         Open in Email App
