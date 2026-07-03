@@ -69,5 +69,12 @@ export function detectBlocking($: CheerioAPI, html: string): AuditCheck[] {
     }
   }
 
-  return [];
+  return [
+    {
+      label: 'Bot/WAF Protection',
+      status: 'pass',
+      message: 'No WAF/bot-protection challenge or block page was detected; the fetched HTML looks like real content.',
+      group: GROUP,
+    },
+  ];
 }

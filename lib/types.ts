@@ -1,1 +1,1 @@
-export type { CheckStatus, AuditCheck, AuditResult, CheckGroup } from './audit/types';
+export type { CheckStatus, AuditCheck, AuditResult, CheckGroup, GroupScore } from './audit/types';

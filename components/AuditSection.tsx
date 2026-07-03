@@ -26,7 +26,7 @@ export default function AuditSection({ label, status, message }: AuditSectionPro
           {styles.label}
         </span>
       </div>
-      <div className="max-w-[560px] font-sans text-sm leading-relaxed text-ink-2">{message}</div>
+      <div className="max-w-[560px] whitespace-pre-line font-sans text-sm leading-relaxed text-ink-2">{message}</div>
     </div>
   );
 }

@@ -7,6 +7,10 @@ import { parseMeta } from '@/lib/audit/parseMeta';
 import { parseHeadings } from '@/lib/audit/parseHeadings';
 import { parseImages } from '@/lib/audit/parseImages';
 import { parseLinks } from '@/lib/audit/parseLinks';
+import { checkAiAccess } from '@/lib/audit/checkAiAccess';
+import { checkRendering } from '@/lib/audit/checkRendering';
+import { parseGeoContent } from '@/lib/audit/parseGeoContent';
+import { parseStructuredData } from '@/lib/audit/parseStructuredData';
 import { scoreResults } from '@/lib/audit/scoreResults';
 import { checkRateLimit } from '@/lib/audit/rateLimiter';
 
@@ -58,12 +62,18 @@ export async function POST(request: NextRequest) {
 
     const $ = cheerio.load(fetchResult.html);
 
+    const aiAccessChecks = await checkAiAccess(fetchResult.finalUrl);
+
     const checks = [
       ...detectBlocking($, fetchResult.html),
       ...parseMeta($),
       ...parseHeadings($),
       ...parseImages($),
       ...parseLinks($, fetchResult.finalUrl),
+      ...aiAccessChecks,
+      ...checkRendering($),
+      ...parseGeoContent($),
+      ...parseStructuredData($),
     ];
 
     const result = scoreResults(fetchResult.finalUrl, checks);

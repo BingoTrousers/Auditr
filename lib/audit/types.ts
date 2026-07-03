@@ -8,10 +8,21 @@ export interface AuditCheck {
   group: string;
 }
 
+export interface GroupScore {
+  group: string;
+  /** Points this group can contribute to the overall 100-point score. */
+  weight: number;
+  /** Points actually earned in this group, given its checks' statuses. */
+  score: number;
+  /** Points recoverable in this group by resolving its warnings/fails (weight - score, rounded). */
+  potentialGain: number;
+}
+
 export interface AuditResult {
   url: string;
   score: number;
   checks: AuditCheck[];
+  breakdown: GroupScore[];
 }
 
 export interface CheckGroup {

@@ -1,31 +1,62 @@
-import type { AuditCheck, AuditResult, CheckStatus } from './types';
+import type { AuditCheck, AuditResult, CheckStatus, GroupScore } from './types';
 
 /**
- * Penalty applied to the overall score for each check of a given status,
- * per group. To add a new check group later (e.g. a "pagespeed" group
- * backed by an external API), just add an entry here and start pushing
- * AuditCheck objects with `group: 'pagespeed'` from a new parse module —
- * no changes to the aggregation logic below are required.
+ * Each group's share of the overall 100-point score. Weights are a
+ * judgment call on how much a category affects real-world SEO/AI
+ * visibility outcomes, not a formula — access/rendering/ai-access sit
+ * higher because they can make a page invisible outright (blocked at
+ * the network/bot layer, unreadable without JS, or excluded from AI
+ * crawlers), while images/links are real but smaller factors.
+ *
+ * To add a new check group later (e.g. a "pagespeed" group backed by an
+ * external API), add an entry here — and nudge the other weights down so
+ * the total stays at (or near) 100 — then start pushing AuditCheck objects
+ * with `group: 'pagespeed'` from a new parse module. No changes to the
+ * aggregation logic below are required.
  */
-const GROUP_PENALTIES: Record<string, Record<CheckStatus, number>> = {
-  access: { fail: 20, warning: 10, pass: 0 },
-  meta: { fail: 15, warning: 6, pass: 0 },
-  headings: { fail: 12, warning: 5, pass: 0 },
-  images: { fail: 10, warning: 4, pass: 0 },
-  links: { fail: 8, warning: 3, pass: 0 },
+const GROUP_WEIGHTS: Record<string, number> = {
+  access: 8,
+  meta: 12,
+  headings: 8,
+  images: 6,
+  links: 6,
+  'ai-access': 14,
+  rendering: 16,
+  'geo-content': 16,
+  'structured-data': 14,
 };
 
-const DEFAULT_PENALTY: Record<CheckStatus, number> = { fail: 10, warning: 4, pass: 0 };
+const DEFAULT_WEIGHT = 5;
+
+/** Fraction of a group's weight earned by a single check of a given status. */
+const STATUS_CREDIT: Record<CheckStatus, number> = {
+  pass: 1,
+  warning: 0.5,
+  fail: 0,
+};
 
 export function scoreResults(url: string, checks: AuditCheck[]): AuditResult {
-  let penaltyTotal = 0;
-
+  const checksByGroup = new Map<string, AuditCheck[]>();
   for (const check of checks) {
-    const penalties = GROUP_PENALTIES[check.group] ?? DEFAULT_PENALTY;
-    penaltyTotal += penalties[check.status];
+    const existing = checksByGroup.get(check.group) ?? [];
+    existing.push(check);
+    checksByGroup.set(check.group, existing);
   }
 
-  const score = Math.max(0, Math.min(100, 100 - penaltyTotal));
+  const breakdown: GroupScore[] = [];
+  let totalScore = 0;
 
-  return { url, score, checks };
+  for (const [group, groupChecks] of Array.from(checksByGroup)) {
+    const weight = GROUP_WEIGHTS[group] ?? DEFAULT_WEIGHT;
+    const earnedFraction =
+      groupChecks.reduce((sum, check) => sum + STATUS_CREDIT[check.status], 0) / groupChecks.length;
+    const score = Math.round(weight * earnedFraction);
+
+    breakdown.push({ group, weight, score, potentialGain: weight - score });
+    totalScore += score;
+  }
+
+  const score = Math.max(0, Math.min(100, totalScore));
+
+  return { url, score, checks, breakdown };
 }
