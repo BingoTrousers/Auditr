@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { AuditResult } from '@/lib/types';
 import {
   buildCsvReport,
+  buildEmailBody,
+  buildEmailSubject,
   buildGithubChecklist,
   buildJsonReport,
   buildLlmPrompt,
@@ -15,7 +17,7 @@ interface ExportToolbarProps {
   result: AuditResult;
 }
 
-type ExportFormat = 'prompt' | 'checklist' | 'markdown' | 'csv' | 'json';
+type ExportFormat = 'prompt' | 'checklist' | 'email' | 'markdown' | 'csv' | 'json';
 
 const EXPORTS: {
   format: ExportFormat;
@@ -34,6 +36,12 @@ const EXPORTS: {
     label: 'GitHub Checklist',
     description: 'An actionable checklist ready to paste into a GitHub issue or pull request.',
     build: buildGithubChecklist,
+  },
+  {
+    format: 'email',
+    label: 'Email',
+    description: "Draft a summary email to whoever owns the fixes — opens in your email client.",
+    build: buildEmailBody,
   },
   {
     format: 'markdown',
@@ -115,15 +123,25 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
                   <pre className="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-canvas p-3 font-mono text-xs leading-relaxed text-ink-1">
                     {build(result)}
                   </pre>
-                  <button
-                    type="button"
-                    onClick={() => copyText(format, build(result))}
-                    className={`mt-3 rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING} ${
-                      isActive && status.state === 'error' ? 'border-fail-border text-fail-text' : ''
-                    } ${isActive && status.state === 'copied' ? 'border-pass-border text-pass-text' : ''}`}
-                  >
-                    {isActive ? (status.state === 'copied' ? 'Copied!' : 'Copy failed') : `Copy ${label}`}
-                  </button>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copyText(format, build(result))}
+                      className={`rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING} ${
+                        isActive && status.state === 'error' ? 'border-fail-border text-fail-text' : ''
+                      } ${isActive && status.state === 'copied' ? 'border-pass-border text-pass-text' : ''}`}
+                    >
+                      {isActive ? (status.state === 'copied' ? 'Copied!' : 'Copy failed') : `Copy ${label}`}
+                    </button>
+                    {format === 'email' && (
+                      <a
+                        href={`mailto:?subject=${encodeURIComponent(buildEmailSubject(result))}&body=${encodeURIComponent(build(result))}`}
+                        className={`rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING}`}
+                      >
+                        Open in Email App
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

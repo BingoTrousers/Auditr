@@ -93,6 +93,52 @@ export function buildGithubChecklist(result: AuditResult): string {
   return lines.join('\n').trim();
 }
 
+const MAX_EMAIL_ISSUES = 8;
+const MAX_EMAIL_BODY_LENGTH = 1600;
+
+/** Subject line for the "Email" export — pairs with buildEmailBody in a mailto: link. */
+export function buildEmailSubject(result: AuditResult): string {
+  return `SEO/GEO audit findings for ${result.url} (${result.score}/100)`;
+}
+
+/**
+ * Condensed plain-text summary of actionable checks for a mailto: link body. mailto: bodies are
+ * capped at roughly 1800-2000 chars across mail clients, so this lists only the top issues rather
+ * than the full report.
+ */
+export function buildEmailBody(result: AuditResult): string {
+  const actionable = result.checks.filter((check) => check.status !== 'pass');
+
+  const lines: string[] = [];
+  lines.push(`Automated SEO/GEO audit of ${result.url} scored ${result.score}/100.`);
+  lines.push('');
+
+  if (actionable.length === 0) {
+    lines.push('No outstanding issues — all checks passed.');
+    return lines.join('\n');
+  }
+
+  const sorted = [...actionable].sort((a, b) => {
+    if (a.status === b.status) return 0;
+    return a.status === 'fail' ? -1 : 1;
+  });
+  const shown = sorted.slice(0, MAX_EMAIL_ISSUES);
+
+  lines.push('Top issues to fix:');
+  for (const check of shown) {
+    const flag = check.status === 'fail' ? 'FAIL' : 'WARN';
+    lines.push(`- [${flag}] ${check.label}: ${check.message}`);
+  }
+
+  if (sorted.length > shown.length) {
+    lines.push('');
+    lines.push(`+ ${sorted.length - shown.length} more issue(s) — see the full report for details.`);
+  }
+
+  const body = lines.join('\n');
+  return body.length > MAX_EMAIL_BODY_LENGTH ? `${body.slice(0, MAX_EMAIL_BODY_LENGTH).trimEnd()}\n…` : body;
+}
+
 /**
  * Instruction-framed prompt listing only actionable (warning/fail) checks, meant to be pasted
  * into an LLM coding assistant pointed at the audited site's codebase.
