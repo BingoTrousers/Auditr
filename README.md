@@ -15,7 +15,10 @@ A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript
   - **Server-Side Rendering** *(Technical)*: heuristic check for whether key content is visible without executing JavaScript, plus login/paywall-gate detection
   - **AI-Citability (GEO)** *(Content)*: answer-first opening structure, heading-as-question phrasing, and data/statistic density — signals that improve how likely a page is to be cited by AI answer engines
   - **Structured Data & Freshness** *(Technical)*: JSON-LD schema presence/validity (FAQPage/Article/Product) and last-updated/`dateModified` freshness signals
-- Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Biggest Wins" + per-group "+N pts available" badges)
+- Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Biggest Wins" + per-group "+N pts available" badges), plus content/technical sub-scores on the score card
+- Every check row shows a short "why this matters" explanation alongside its message, so a non-technical reader isn't left guessing why a check affects SEO/GEO outcomes
+- Run-over-run comparison: results are cached per-URL in `localStorage` (client-side only, nothing sent to a server), and re-auditing the same URL shows a score delta and newly-passing/newly-failing checks
+- Export & Share: copy the audit as an LLM-ready prompt, a GitHub issue checklist, an email summary (with a one-click "Open in Email App" `mailto:` link), a full Markdown report, CSV, or raw JSON
 - SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout — applied uniformly to the main page fetch and the robots.txt/llms.txt fetches
 - In-memory per-IP rate limiting (~5 requests/minute)
 - Deliberately unindexed: `app/robots.ts` disallows all crawlers, every response sends `X-Robots-Tag: noindex, nofollow`, and page metadata sets `robots: noindex, nofollow`
@@ -69,11 +72,14 @@ app/
   globals.css
 components/
   UrlForm.tsx              URL input + validation + loading state
-  ScoreCard.tsx            Overall score, color-coded band (Good/Needs Work/Poor)
-  AuditSection.tsx         Single check row (label, status badge, message)
+  ScoreCard.tsx            Overall score, color-coded band (Good/Needs Work/Poor), content/technical sub-scores
+  AuditSection.tsx         Single check row (label, status badge, message, "why this matters")
   ResultsView.tsx          Composes ScoreCard + Content/Technical tabs + sort control + Biggest Wins + grouped, collapsible AuditSections
+  CompareSummary.tsx       Score delta + newly-passing/failing checks vs. the previous localStorage run for the same URL
+  ExportToolbar.tsx        Export/share panel: LLM prompt, GitHub checklist, email (+ mailto link), Markdown, CSV, JSON
   ErrorAlert.tsx           Status-aware error banner (rate limit / fetch failure / server error)
   ThemeToggle.tsx          Manual light/dark switch (class + localStorage)
+  focusRing.ts             Shared FOCUS_RING / FOCUS_RING_INSET Tailwind class constants
 lib/
   audit/fetchResource.ts     Shared SSRF-safe fetch primitive (DNS pinning, redirect re-validation, size cap)
   audit/fetchPage.ts         Main-page fetch: wraps fetchResource with content-type check + WAF header hint
@@ -89,6 +95,10 @@ lib/
   audit/scoreResults.ts      Weighted-category scoring (GROUP_WEIGHTS → score + per-group breakdown)
   audit/rateLimiter.ts       In-memory per-IP rate limiter
   audit/validateUrl.ts       SSRF protection (DNS-resolved IP validation)
+  audit/groupLabels.ts       Shared check-group → display-label map (UI + export formats)
+  audit/checkExplanations.ts Static "why this matters" copy per check label
+  audit/exportFormats.ts     Pure formatters for the Export & Share panel (prompt/checklist/email/markdown/csv/json)
+  audit/auditHistory.ts      Client-side (localStorage) per-URL result history for run-over-run comparison
   types.ts                   Shared AuditCheck / AuditResult / GroupScore types
 ```
 
@@ -104,7 +114,4 @@ Visual design (colors, type scale, spacing, component states) is sourced from th
 
 Theme defaults to the system's `prefers-color-scheme`, overridable via the header's light/dark toggle (`ThemeToggle`), which persists the choice to `localStorage` and applies it via a `dark`/`light` class on `<html>` (set before hydration by a static inline script in `app/layout.tsx` to avoid a flash of the wrong theme).
 
-One element shown in the original design was **not** implemented because it implies a feature this app doesn't have:
-- A "compact score card for comparing URLs" variant, which implies a recent-audits history feature that doesn't exist here.
-
-If that becomes real (e.g. persisted audit history), the styling patterns already exist in the source design to extend from.
+Run-over-run comparison (`CompareSummary`) now covers the "comparing against a previous audit" case using client-side `localStorage` history, but there's still no server-persisted multi-URL history/dashboard — a "compact score card for comparing URLs" list view from the original design remains unimplemented. The styling patterns already exist in the source design to extend from if that becomes real.
