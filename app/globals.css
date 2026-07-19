@@ -18,7 +18,10 @@
   --border-strong: #d4d4d8;
   --text-1: #18181b;
   --text-2: #52525b;
-  --text-3: #8b8b93;
+  /* Darkened from the original #8b8b93 (~3.2:1) to meet WCAG AA 4.5:1 for
+     regular-weight text against canvas/surface — this token is used at
+     text-xs/11px across the app (timestamps, tab labels, descriptions). */
+  --text-3: #707076;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-tint: #eff4ff;
@@ -48,7 +51,9 @@
     --border-strong: #38383e;
     --text-1: #f4f4f5;
     --text-2: #a1a1aa;
-    --text-3: #6c6c74;
+    /* Lightened from the original #6c6c74 (~3.2-3.6:1) for the same
+       WCAG AA 4.5:1 reason as the light theme above. */
+    --text-3: #868690;
     --accent: #5b9dff;
     --accent-hover: #7db0ff;
     --accent-tint: rgba(91, 157, 255, 0.14);
@@ -78,7 +83,7 @@
   --border-strong: #38383e;
   --text-1: #f4f4f5;
   --text-2: #a1a1aa;
-  --text-3: #6c6c74;
+  --text-3: #868690;
   --accent: #5b9dff;
   --accent-hover: #7db0ff;
   --accent-tint: rgba(91, 157, 255, 0.14);
