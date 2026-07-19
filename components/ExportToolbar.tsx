@@ -40,13 +40,13 @@ const EXPORTS: {
   {
     format: 'email',
     label: 'Email',
-    description: "Draft a summary email to whoever owns the fixes — opens in your email client.",
+    description: 'Draft a summary email to whoever owns the fixes.',
     build: buildEmailBody,
   },
   {
     format: 'markdown',
     label: 'Markdown Report',
-    description: 'A full write-up of every check, including passes — good for sharing or docs.',
+    description: 'A full write-up of every check, including passes.',
     build: buildMarkdownReport,
   },
   {

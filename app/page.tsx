@@ -26,6 +26,7 @@ export default function Home() {
   const [lastUrl, setLastUrl] = useState('');
   const [snapshotScannedAt, setSnapshotScannedAt] = useState<string | null>(null);
   const [historyEntries, setHistoryEntries] = useState<ScanHistoryEntry[]>([]);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     setHistoryEntries(getHistory());
@@ -37,8 +38,8 @@ export default function Home() {
   // a sidebar next to an empty "no results yet" panel.
   const containerWidth = result ? 'max-w-[1280px]' : 'max-w-[640px]';
 
-  /** Runs the audit and syncs comparison/history state. Returns the result, or null on a handled error. */
-  async function submitAudit(url: string): Promise<AuditResult | null> {
+  /** Runs the audit and syncs comparison/history state. Returns the result and its new history entry id, or null on a handled error. */
+  async function submitAudit(url: string): Promise<{ result: AuditResult; entryId: string | null } | null> {
     const response = await fetch('/api/audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,8 +56,9 @@ export default function Home() {
     setPreviousResult(getPreviousResult(url));
     saveResult(url, data as AuditResult);
     saveToHistory(data as AuditResult);
-    setHistoryEntries(getHistory());
-    return data as AuditResult;
+    const entries = getHistory();
+    setHistoryEntries(entries);
+    return { result: data as AuditResult, entryId: entries[0]?.id ?? null };
   }
 
   async function runAudit(url: string) {
@@ -70,8 +72,11 @@ export default function Home() {
       // The previous result (if any) stays on screen — with the form showing
       // its own "running" state — instead of being cleared out immediately,
       // so the layout never collapses back to a single column mid-request.
-      const data = await submitAudit(url);
-      if (data) setResult(data);
+      const outcome = await submitAudit(url);
+      if (outcome) {
+        setResult(outcome.result);
+        setSelectedEntryId(outcome.entryId);
+      }
     } catch {
       setError({ message: 'Could not reach the audit service. Please try again.', status: 0 });
     } finally {
@@ -88,10 +93,11 @@ export default function Home() {
     setError(null);
 
     try {
-      const data = await submitAudit(url);
-      if (data) {
-        setResult(data);
+      const outcome = await submitAudit(url);
+      if (outcome) {
+        setResult(outcome.result);
         setSnapshotScannedAt(null);
+        setSelectedEntryId(outcome.entryId);
       }
     } catch {
       setError({ message: 'Could not reach the audit service. Please try again.', status: 0 });
@@ -106,11 +112,13 @@ export default function Home() {
     setPreviousResult(null);
     setSnapshotScannedAt(entry.scannedAt);
     setResult(entry.result);
+    setSelectedEntryId(entry.id);
   }
 
   function handleClearHistory() {
     clearHistory();
     setHistoryEntries([]);
+    setSelectedEntryId(null);
   }
 
   return (
@@ -154,7 +162,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <UrlForm onSubmit={runAudit} loading={loading || rescanning} />
+              <UrlForm onSubmit={runAudit} loading={loading || rescanning} compact />
 
               <div aria-live="polite" className="sr-only">
                 {(loading || rescanning) && 'Running audit…'}
@@ -172,7 +180,7 @@ export default function Home() {
                 </div>
               )}
 
-              <ScanHistory entries={historyEntries} onSelect={loadHistoryEntry} onClear={handleClearHistory} />
+              <ScanHistory entries={historyEntries} selectedId={selectedEntryId} onSelect={loadHistoryEntry} onClear={handleClearHistory} />
             </div>
 
             <div className="min-w-0">
@@ -211,7 +219,7 @@ export default function Home() {
               </div>
             )}
 
-            <ScanHistory entries={historyEntries} onSelect={loadHistoryEntry} onClear={handleClearHistory} />
+            <ScanHistory entries={historyEntries} selectedId={selectedEntryId} onSelect={loadHistoryEntry} onClear={handleClearHistory} />
           </>
         )}
       </div>

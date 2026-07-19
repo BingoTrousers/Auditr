@@ -213,26 +213,15 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
 
   return (
     <div className="flex flex-col gap-6">
-      <ScoreCard score={result.score} url={result.url} contentScore={tabScore('content')} technicalScore={tabScore('technical')} />
-
-      {snapshotScannedAt && (
-        <div role="status" className="-mt-3 flex flex-wrap items-center justify-between gap-3 px-1">
-          <span className="font-sans text-xs text-ink-3">
-            Snapshot from {new Date(snapshotScannedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-          </span>
-          {onRescan && (
-            <button
-              type="button"
-              onClick={onRescan}
-              disabled={rescanning}
-              className={`grid whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3 py-1.5 font-sans text-xs font-bold text-ink-1 transition-colors disabled:cursor-default disabled:opacity-60 ${FOCUS_RING} hover:bg-accent-tint hover:text-accent`}
-            >
-              <span className={`col-start-1 row-start-1 text-center ${rescanning ? '' : 'invisible'}`}>Rescanning…</span>
-              <span className={`col-start-1 row-start-1 text-center ${rescanning ? 'invisible' : ''}`}>Rescan</span>
-            </button>
-          )}
-        </div>
-      )}
+      <ScoreCard
+        score={result.score}
+        url={result.url}
+        contentScore={tabScore('content')}
+        technicalScore={tabScore('technical')}
+        snapshotScannedAt={snapshotScannedAt}
+        onRescan={onRescan}
+        rescanning={rescanning}
+      />
 
       {previous && <CompareSummary current={result} previous={previous} />}
 

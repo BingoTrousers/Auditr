@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function About() {
   return (
     <main className="min-h-screen bg-canvas">
-      <header className="mx-auto flex max-w-[640px] items-center justify-between px-6 pb-10 pt-7 sm:px-8">
+      <header className="mx-auto flex max-w-[640px] items-center justify-between px-6 pb-10 pt-7 sm:px-8 lg:px-10">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent">
             <svg
@@ -33,7 +33,7 @@ export default function About() {
         <ThemeToggle />
       </header>
 
-      <div className="mx-auto max-w-[640px] px-6 pb-24 sm:px-8">
+      <div className="mx-auto max-w-[640px] px-6 pb-24 sm:px-8 lg:px-10">
         <h1 className="mb-3 font-sans text-[28px] font-extrabold tracking-tight text-ink-1">About Auditr</h1>
         <p className="mb-8 font-sans text-base leading-relaxed text-ink-2">
           Auditr is a quick, one-off SEO &amp; GEO (AI-visibility) checker. Paste in a URL and it fetches the page,

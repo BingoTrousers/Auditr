@@ -8,13 +8,14 @@ import { FOCUS_RING, FOCUS_RING_INSET } from './focusRing';
 
 interface ScanHistoryProps {
   entries: ScanHistoryEntry[];
+  selectedId?: string | null;
   onSelect: (entry: ScanHistoryEntry) => void;
   onClear: () => void;
 }
 
 const PAGE_SIZE = 10;
 
-export default function ScanHistory({ entries, onSelect, onClear }: ScanHistoryProps) {
+export default function ScanHistory({ entries, selectedId, onSelect, onClear }: ScanHistoryProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // No history yet — the section disappears entirely rather than showing an
@@ -38,15 +39,21 @@ export default function ScanHistory({ entries, onSelect, onClear }: ScanHistoryP
         <ul className="divide-y divide-line">
           {entries.slice(0, visibleCount).map((entry) => {
             const band = getScoreBand(entry.result.score);
+            const isSelected = entry.id === selectedId;
             return (
               <li key={entry.id}>
                 <button
                   type="button"
                   onClick={() => onSelect(entry)}
-                  className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-canvas ${FOCUS_RING_INSET}`}
+                  aria-current={isSelected ? 'true' : undefined}
+                  className={`flex w-full items-center justify-between gap-3 border-l-2 px-4 py-3 text-left transition ${FOCUS_RING_INSET} ${
+                    isSelected ? 'border-l-accent bg-accent-tint' : 'border-l-transparent hover:bg-canvas'
+                  }`}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-mono text-[13px] text-ink-1">{entry.result.url}</span>
+                    <span className={`block truncate font-mono text-[13px] ${isSelected ? 'font-semibold text-accent' : 'text-ink-1'}`}>
+                      {entry.result.url}
+                    </span>
                     <span className="block font-sans text-xs text-ink-3">{formatRelativeTime(entry.scannedAt)}</span>
                   </span>
                   <span

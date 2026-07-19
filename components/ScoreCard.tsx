@@ -1,8 +1,15 @@
+import { FOCUS_RING } from './focusRing';
+
 interface ScoreCardProps {
   score: number;
   url: string;
   contentScore?: number | null;
   technicalScore?: number | null;
+  /** ISO timestamp when set — this result is a past snapshot loaded from scan history, not a live check. */
+  snapshotScannedAt?: string | null;
+  /** Re-runs a live audit for this snapshot's URL. Only relevant while snapshotScannedAt is set. */
+  onRescan?: () => void;
+  rescanning?: boolean;
 }
 
 const BANDS = {
@@ -37,7 +44,15 @@ export function getScoreBand(score: number) {
   return getBand(score);
 }
 
-export default function ScoreCard({ score, url, contentScore, technicalScore }: ScoreCardProps) {
+export default function ScoreCard({
+  score,
+  url,
+  contentScore,
+  technicalScore,
+  snapshotScannedAt,
+  onRescan,
+  rescanning,
+}: ScoreCardProps) {
   const band = getBand(score);
   const clamped = Math.max(0, Math.min(100, score));
 
@@ -73,6 +88,25 @@ export default function ScoreCard({ score, url, contentScore, technicalScore }: 
               {label} <span className="font-mono font-semibold text-ink-2">{value}/100</span>
             </span>
           ))}
+        </div>
+      )}
+
+      {snapshotScannedAt && onRescan && (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+          <span className="font-sans text-xs text-ink-3">
+            Snapshot from {new Date(snapshotScannedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+          </span>
+          <button
+            type="button"
+            onClick={onRescan}
+            disabled={rescanning}
+            className={`grid whitespace-nowrap rounded-lg bg-accent px-4 py-2 font-sans text-xs font-bold text-white shadow-card transition-colors hover:bg-accent-hover disabled:cursor-default disabled:opacity-60 ${FOCUS_RING}`}
+          >
+            {/* Both labels are stacked in the same grid cell so the button
+                reserves width for the longer one and never resizes. */}
+            <span className={`col-start-1 row-start-1 text-center ${rescanning ? '' : 'invisible'}`}>Rescanning…</span>
+            <span className={`col-start-1 row-start-1 text-center ${rescanning ? 'invisible' : ''}`}>Rescan</span>
+          </button>
         </div>
       )}
     </div>
