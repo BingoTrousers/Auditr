@@ -23,9 +23,10 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-pressed={dark}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3.5 py-2 font-sans text-xs font-semibold text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      className="grid whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3.5 py-2 font-sans text-xs font-semibold text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
     >
-      {dark ? 'Light mode' : 'Dark mode'}
+      <span className={`col-start-1 row-start-1 text-center ${dark ? '' : 'invisible'}`}>Light mode</span>
+      <span className={`col-start-1 row-start-1 text-center ${dark ? 'invisible' : ''}`}>Dark mode</span>
     </button>
   );
 }

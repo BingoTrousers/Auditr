@@ -1,12 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import UrlForm from '@/components/UrlForm';
 import ResultsView from '@/components/ResultsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScanHistory from '@/components/ScanHistory';
-import ResultsPlaceholder from '@/components/ResultsPlaceholder';
 import { getPreviousResult, saveResult, type AuditHistoryEntry } from '@/lib/audit/auditHistory';
 import { clearHistory, getHistory, saveToHistory } from '@/lib/history/scanHistory';
 import type { ScanHistoryEntry } from '@/lib/history/types';
@@ -19,6 +19,7 @@ interface AuditError {
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
+  const [rescanning, setRescanning] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
   const [previousResult, setPreviousResult] = useState<AuditHistoryEntry | null>(null);
   const [error, setError] = useState<AuditError | null>(null);
@@ -30,42 +31,72 @@ export default function Home() {
     setHistoryEntries(getHistory());
   }, []);
 
-  // Once there's either a saved scan or a report on screen, the page earns
-  // the wider two-column layout; otherwise it stays a simple centered form.
-  const isExpandedLayout = historyEntries.length > 0 || result !== null;
-  const containerWidth = isExpandedLayout ? 'max-w-[1280px]' : 'max-w-[640px]';
+  // The wide two-column layout only appears once a report is actually on
+  // screen; otherwise (including right after navigating back from another
+  // page) it's a simple centered form with history listed underneath, never
+  // a sidebar next to an empty "no results yet" panel.
+  const containerWidth = result ? 'max-w-[1280px]' : 'max-w-[640px]';
+
+  /** Runs the audit and syncs comparison/history state. Returns the result, or null on a handled error. */
+  async function submitAudit(url: string): Promise<AuditResult | null> {
+    const response = await fetch('/api/audit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError({ message: data?.error ?? 'Something went wrong while running the audit.', status: response.status });
+      return null;
+    }
+
+    setPreviousResult(getPreviousResult(url));
+    saveResult(url, data as AuditResult);
+    saveToHistory(data as AuditResult);
+    setHistoryEntries(getHistory());
+    return data as AuditResult;
+  }
 
   async function runAudit(url: string) {
     setLastUrl(url);
     setLoading(true);
     setError(null);
-    setResult(null);
     setPreviousResult(null);
     setSnapshotScannedAt(null);
 
     try {
-      const response = await fetch('/api/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError({ message: data?.error ?? 'Something went wrong while running the audit.', status: response.status });
-        return;
-      }
-
-      setPreviousResult(getPreviousResult(url));
-      saveResult(url, data as AuditResult);
-      saveToHistory(data as AuditResult);
-      setHistoryEntries(getHistory());
-      setResult(data as AuditResult);
+      // The previous result (if any) stays on screen — with the form showing
+      // its own "running" state — instead of being cleared out immediately,
+      // so the layout never collapses back to a single column mid-request.
+      const data = await submitAudit(url);
+      if (data) setResult(data);
     } catch {
       setError({ message: 'Could not reach the audit service. Please try again.', status: 0 });
     } finally {
       setLoading(false);
+    }
+  }
+
+  /** Re-runs a live audit for the snapshot currently on screen, replacing it in place once it lands. */
+  async function rescanCurrent() {
+    if (!result) return;
+    const url = result.url;
+    setLastUrl(url);
+    setRescanning(true);
+    setError(null);
+
+    try {
+      const data = await submitAudit(url);
+      if (data) {
+        setResult(data);
+        setSnapshotScannedAt(null);
+      }
+    } catch {
+      setError({ message: 'Could not reach the audit service. Please try again.', status: 0 });
+    } finally {
+      setRescanning(false);
     }
   }
 
@@ -104,11 +135,16 @@ export default function Home() {
           </div>
           <span className="font-sans text-[17px] font-extrabold tracking-tight text-ink-1">Auditr</span>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <Link href="/about" className="font-sans text-sm font-semibold text-ink-2 hover:text-ink-1">
+            About
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className={`mx-auto ${containerWidth} px-6 pb-24 sm:px-8 lg:px-10`}>
-        {isExpandedLayout ? (
+        {result ? (
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[380px_minmax(0,1fr)] lg:items-start lg:gap-12">
             <div className="lg:sticky lg:top-8">
               <div className="mb-8 text-center lg:mb-10 lg:text-left">
@@ -118,10 +154,10 @@ export default function Home() {
                 </p>
               </div>
 
-              <UrlForm onSubmit={runAudit} loading={loading} />
+              <UrlForm onSubmit={runAudit} loading={loading || rescanning} />
 
               <div aria-live="polite" className="sr-only">
-                {loading && 'Running audit…'}
+                {(loading || rescanning) && 'Running audit…'}
                 {error && `Audit failed: ${error.message}`}
                 {result && `Audit complete. Score: ${result.score} out of 100.`}
               </div>
@@ -140,11 +176,13 @@ export default function Home() {
             </div>
 
             <div className="min-w-0">
-              {result ? (
-                <ResultsView result={result} previous={previousResult} snapshotScannedAt={snapshotScannedAt} />
-              ) : (
-                <ResultsPlaceholder />
-              )}
+              <ResultsView
+                result={result}
+                previous={previousResult}
+                snapshotScannedAt={snapshotScannedAt}
+                onRescan={rescanCurrent}
+                rescanning={rescanning}
+              />
             </div>
           </div>
         ) : (
@@ -172,6 +210,8 @@ export default function Home() {
                 />
               </div>
             )}
+
+            <ScanHistory entries={historyEntries} onSelect={loadHistoryEntry} onClear={handleClearHistory} />
           </>
         )}
       </div>

@@ -28,7 +28,7 @@ export default function ScanHistory({ entries, onSelect, onClear }: ScanHistoryP
         <button
           type="button"
           onClick={onClear}
-          className={`rounded-lg px-2 py-1 font-sans text-xs font-semibold text-ink-3 transition hover:text-fail-text ${FOCUS_RING}`}
+          className={`rounded-lg px-2 py-1 font-sans text-xs font-semibold text-ink-3 underline decoration-transparent underline-offset-2 transition hover:text-ink-1 hover:decoration-ink-3 ${FOCUS_RING}`}
         >
           Clear history
         </button>
@@ -70,10 +70,6 @@ export default function ScanHistory({ entries, onSelect, onClear }: ScanHistoryP
           Show more
         </button>
       )}
-
-      <p className="mt-2 font-sans text-[11px] text-ink-3">
-        Saved locally in your browser only — never sent to our servers. Clear anytime.
-      </p>
     </div>
   );
 }

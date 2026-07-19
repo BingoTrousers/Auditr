@@ -136,11 +136,21 @@ export default function ExportToolbar({ result }: ExportToolbarProps) {
                     <button
                       type="button"
                       onClick={() => copyText(format, content)}
-                      className={`rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING} ${
+                      className={`grid rounded-lg border border-line bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-ink-2 transition hover:border-accent hover:text-ink-1 ${FOCUS_RING} ${
                         isActive && status.state === 'error' ? 'border-fail-border text-fail-text' : ''
                       } ${isActive && status.state === 'copied' ? 'border-pass-border text-pass-text' : ''}`}
                     >
-                      {isActive ? (status.state === 'copied' ? 'Copied!' : 'Copy failed') : `Copy ${label}`}
+                      {/* All three label variants are stacked in the same grid cell so the
+                          button reserves width for the widest one and never resizes on click. */}
+                      <span className={`col-start-1 row-start-1 whitespace-nowrap text-center ${isActive && status.state === 'copied' ? '' : 'invisible'}`}>
+                        Copied!
+                      </span>
+                      <span className={`col-start-1 row-start-1 whitespace-nowrap text-center ${isActive && status.state === 'error' ? '' : 'invisible'}`}>
+                        Copy failed
+                      </span>
+                      <span className={`col-start-1 row-start-1 whitespace-nowrap text-center ${isActive ? 'invisible' : ''}`}>
+                        Copy {label}
+                      </span>
                     </button>
                     {format === 'email' && (
                       <a

@@ -15,6 +15,9 @@ interface ResultsViewProps {
   previous?: AuditHistoryEntry | null;
   /** ISO timestamp when set — result is a past snapshot loaded from scan history, not a live check. */
   snapshotScannedAt?: string | null;
+  /** Re-runs a live audit for this snapshot's URL. Only relevant while snapshotScannedAt is set. */
+  onRescan?: () => void;
+  rescanning?: boolean;
 }
 
 type Tab = 'content' | 'technical';
@@ -152,7 +155,7 @@ function GainBadge({ potentialGain }: { potentialGain: number }) {
   );
 }
 
-export default function ResultsView({ result, previous, snapshotScannedAt }: ResultsViewProps) {
+export default function ResultsView({ result, previous, snapshotScannedAt, onRescan, rescanning }: ResultsViewProps) {
   const [expandedOverrides, setExpandedOverrides] = useState<Record<string, boolean>>({});
   const [sortMode, setSortMode] = useState<SortMode>('opportunity');
   const [activeTab, setActiveTab] = useState<Tab>('content');
@@ -210,13 +213,26 @@ export default function ResultsView({ result, previous, snapshotScannedAt }: Res
 
   return (
     <div className="flex flex-col gap-6">
+      <ScoreCard score={result.score} url={result.url} contentScore={tabScore('content')} technicalScore={tabScore('technical')} />
+
       {snapshotScannedAt && (
-        <div role="status" className="rounded-xl border border-line bg-surface px-4 py-2.5 font-sans text-xs text-ink-3">
-          Viewing a past snapshot — scanned {new Date(snapshotScannedAt).toLocaleString()}
+        <div role="status" className="-mt-3 flex flex-wrap items-center justify-between gap-3 px-1">
+          <span className="font-sans text-xs text-ink-3">
+            Snapshot from {new Date(snapshotScannedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+          </span>
+          {onRescan && (
+            <button
+              type="button"
+              onClick={onRescan}
+              disabled={rescanning}
+              className={`grid whitespace-nowrap rounded-lg border border-lineStrong bg-surface px-3 py-1.5 font-sans text-xs font-bold text-ink-1 transition-colors disabled:cursor-default disabled:opacity-60 ${FOCUS_RING} hover:bg-accent-tint hover:text-accent`}
+            >
+              <span className={`col-start-1 row-start-1 text-center ${rescanning ? '' : 'invisible'}`}>Rescanning…</span>
+              <span className={`col-start-1 row-start-1 text-center ${rescanning ? 'invisible' : ''}`}>Rescan</span>
+            </button>
+          )}
         </div>
       )}
-
-      <ScoreCard score={result.score} url={result.url} contentScore={tabScore('content')} technicalScore={tabScore('technical')} />
 
       {previous && <CompareSummary current={result} previous={previous} />}
 

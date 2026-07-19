@@ -68,11 +68,14 @@ export default function UrlForm({ onSubmit, loading }: UrlFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className={`whitespace-nowrap rounded-[10px] px-[22px] py-[13px] font-sans text-[15px] font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${
+        className={`grid whitespace-nowrap rounded-[10px] px-[22px] py-[13px] font-sans text-[15px] font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${
           loading ? 'cursor-default bg-lineStrong' : 'cursor-pointer bg-accent hover:bg-accent-hover'
         }`}
       >
-        {loading ? 'Running audit…' : 'Run Audit'}
+        {/* Both labels are stacked in the same grid cell so the button reserves
+            width for the longer one and never resizes when loading toggles. */}
+        <span className={`col-start-1 row-start-1 text-center ${loading ? '' : 'invisible'}`}>Running audit…</span>
+        <span className={`col-start-1 row-start-1 text-center ${loading ? 'invisible' : ''}`}>Run Audit</span>
       </button>
     </form>
   );
