@@ -13,6 +13,8 @@ import CompareSummary from './CompareSummary';
 interface ResultsViewProps {
   result: AuditResult;
   previous?: AuditHistoryEntry | null;
+  /** ISO timestamp when set — result is a past snapshot loaded from scan history, not a live check. */
+  snapshotScannedAt?: string | null;
 }
 
 type Tab = 'content' | 'technical';
@@ -150,7 +152,7 @@ function GainBadge({ potentialGain }: { potentialGain: number }) {
   );
 }
 
-export default function ResultsView({ result, previous }: ResultsViewProps) {
+export default function ResultsView({ result, previous, snapshotScannedAt }: ResultsViewProps) {
   const [expandedOverrides, setExpandedOverrides] = useState<Record<string, boolean>>({});
   const [sortMode, setSortMode] = useState<SortMode>('opportunity');
   const [activeTab, setActiveTab] = useState<Tab>('content');
@@ -208,6 +210,12 @@ export default function ResultsView({ result, previous }: ResultsViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      {snapshotScannedAt && (
+        <div role="status" className="rounded-xl border border-line bg-surface px-4 py-2.5 font-sans text-xs text-ink-3">
+          Viewing a past snapshot — scanned {new Date(snapshotScannedAt).toLocaleString()}
+        </div>
+      )}
+
       <ScoreCard score={result.score} url={result.url} contentScore={tabScore('content')} technicalScore={tabScore('technical')} />
 
       {previous && <CompareSummary current={result} previous={previous} />}

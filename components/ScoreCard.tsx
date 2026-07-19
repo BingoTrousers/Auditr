@@ -32,6 +32,11 @@ function getBand(score: number) {
   return BANDS.poor;
 }
 
+/** Shared so other views (e.g. scan history) can reuse the same score → color mapping. */
+export function getScoreBand(score: number) {
+  return getBand(score);
+}
+
 export default function ScoreCard({ score, url, contentScore, technicalScore }: ScoreCardProps) {
   const band = getBand(score);
   const clamped = Math.max(0, Math.min(100, score));
