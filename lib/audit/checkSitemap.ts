@@ -226,7 +226,7 @@ function mostRecentLastmod(entries: SitemapUrlEntry[]): string | null {
 
 function buildFreshnessCheck(matched: SitemapUrlEntry | null, allEntries: SitemapUrlEntry[]): AuditCheck {
   const lastmod = matched?.lastmod ?? mostRecentLastmod(allEntries);
-  const source = matched?.lastmod ? "the audited page's own" : "the sitemap's most recent";
+  const source = matched?.lastmod ? "The audited page's own" : "The sitemap's most recent";
 
   if (!lastmod) {
     return {
@@ -253,7 +253,7 @@ function buildFreshnessCheck(matched: SitemapUrlEntry | null, allEntries: Sitema
     return {
       label: 'Sitemap Freshness',
       status: 'warning',
-      message: `The ${source} "lastmod" is ${lastmod}, over ${STALE_MONTHS} months old. Keeping this current helps crawlers and AI systems prioritize recrawling.`,
+      message: `${source} "lastmod" is ${lastmod}, over ${STALE_MONTHS} months old. Keeping this current helps crawlers and AI systems prioritize recrawling.`,
       group: GROUP,
     };
   }
@@ -261,7 +261,7 @@ function buildFreshnessCheck(matched: SitemapUrlEntry | null, allEntries: Sitema
   return {
     label: 'Sitemap Freshness',
     status: 'pass',
-    message: `The ${source} "lastmod" is ${lastmod}, within the last ${STALE_MONTHS} months.`,
+    message: `${source} "lastmod" is ${lastmod}, within the last ${STALE_MONTHS} months.`,
     group: GROUP,
   };
 }
