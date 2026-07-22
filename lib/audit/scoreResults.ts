@@ -16,14 +16,15 @@ import type { AuditCheck, AuditResult, CheckStatus, GroupScore } from './types';
  */
 const GROUP_WEIGHTS: Record<string, number> = {
   access: 8,
-  meta: 12,
-  headings: 8,
+  meta: 11,
+  headings: 7,
   images: 6,
   links: 6,
-  'ai-access': 14,
-  rendering: 16,
-  'geo-content': 16,
-  'structured-data': 14,
+  'ai-access': 12,
+  rendering: 14,
+  'geo-content': 14,
+  'structured-data': 12,
+  sitemap: 10,
 };
 
 const DEFAULT_WEIGHT = 5;

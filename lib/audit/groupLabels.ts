@@ -9,4 +9,5 @@ export const GROUP_LABELS: Record<string, string> = {
   rendering: 'Server-Side Rendering',
   'geo-content': 'AI-Citability (GEO)',
   'structured-data': 'Structured Data & Freshness',
+  sitemap: 'Sitemap',
 };

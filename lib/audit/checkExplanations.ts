@@ -41,4 +41,10 @@ export const CHECK_EXPLANATIONS: Record<string, string> = {
     'Content hidden behind a login or paywall can\'t be crawled or cited, no matter how well it\'s written.',
   'Structured Data (Schema.org)':
     'Schema markup gives search engines and AI models explicit, machine-readable facts about the page instead of making them infer it from prose.',
+  'Sitemap.xml':
+    'An XML sitemap tells crawlers every URL on a site upfront, instead of relying on them to discover pages by following links.',
+  'Page Listed in Sitemap':
+    "If the exact page being audited isn't in the sitemap, crawlers and AI systems may take longer to discover it, or miss it entirely.",
+  'Sitemap Freshness':
+    'A recent "lastmod" date signals to crawlers which pages have changed and deserve a priority recrawl.',
 };

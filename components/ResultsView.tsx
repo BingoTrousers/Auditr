@@ -35,6 +35,7 @@ const GROUP_TAB: Record<string, Tab> = {
   'ai-access': 'technical',
   rendering: 'technical',
   'structured-data': 'technical',
+  sitemap: 'technical',
 };
 
 const TABS: { tab: Tab; label: string }[] = [

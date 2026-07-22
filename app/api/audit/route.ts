@@ -8,6 +8,7 @@ import { parseHeadings } from '@/lib/audit/parseHeadings';
 import { parseImages } from '@/lib/audit/parseImages';
 import { parseLinks } from '@/lib/audit/parseLinks';
 import { checkAiAccess } from '@/lib/audit/checkAiAccess';
+import { checkSitemap } from '@/lib/audit/checkSitemap';
 import { checkRendering } from '@/lib/audit/checkRendering';
 import { parseGeoContent } from '@/lib/audit/parseGeoContent';
 import { parseStructuredData } from '@/lib/audit/parseStructuredData';
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
     // Kick off the robots.txt/llms.txt fetch concurrently with the
     // synchronous parse checks below, since it doesn't depend on them.
     const aiAccessPromise = checkAiAccess(fetchResult.finalUrl);
+    const sitemapPromise = checkSitemap(fetchResult.finalUrl);
 
     const checks = [
       ...detectBlocking($, fetchResult.html),
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
       ...parseImages($),
       ...parseLinks($, fetchResult.finalUrl),
       ...(await aiAccessPromise),
+      ...(await sitemapPromise),
       ...checkRendering($),
       ...parseGeoContent($),
       ...parseStructuredData($),
