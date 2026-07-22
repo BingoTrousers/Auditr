@@ -26,8 +26,18 @@ export default function ScoreSparkline({ scores }: ScoreSparklineProps) {
     })
     .join(' ');
 
+  const summary = `Score trend over last ${scores.length} scans: ${scores.join(' → ')}`;
+
   return (
-    <svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-hidden="true" className={`shrink-0 ${band.text}`}>
+    <svg
+      width={WIDTH}
+      height={HEIGHT}
+      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      role="img"
+      aria-label={summary}
+      className={`shrink-0 ${band.text}`}
+    >
+      <title>{summary}</title>
       <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

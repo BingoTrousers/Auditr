@@ -118,7 +118,12 @@ export default function ScoreCard({
           <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{displayScore}</span>
           <span className="font-mono text-xl font-medium text-ink-3">/ 100</span>
         </div>
-        {sparklineScores && sparklineScores.length > 0 && <ScoreSparkline scores={sparklineScores} />}
+        {sparklineScores && sparklineScores.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-wide text-ink-3">Trend</span>
+            <ScoreSparkline scores={sparklineScores} />
+          </div>
+        )}
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-line">
