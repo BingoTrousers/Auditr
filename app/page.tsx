@@ -73,7 +73,7 @@ export default function Home() {
       return null;
     }
 
-    setPreviousResult(getLatestEntryForUrl(url));
+    setPreviousResult(getLatestEntryForUrl(data.url));
     saveToHistory(data as AuditResult);
     const entries = getHistory();
     setHistoryEntries(entries);
