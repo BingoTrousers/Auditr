@@ -174,7 +174,7 @@ export default function Home() {
               <div className="mb-8 text-center lg:mb-10 lg:text-left">
                 <h1 className="mb-3 font-sans text-[34px] font-extrabold tracking-tight text-ink-1">Auditr</h1>
                 <p className="font-sans text-base leading-relaxed text-ink-2">
-                  Enter a URL to run a quick, one-off SEO &amp; GEO audit.
+                  Enter a URL to run a quick SEO &amp; GEO audit.
                 </p>
               </div>
 
@@ -214,7 +214,7 @@ export default function Home() {
             <div className="mb-10 text-center">
               <h1 className="mb-3 font-sans text-[34px] font-extrabold tracking-tight text-ink-1">Auditr</h1>
               <p className="font-sans text-base leading-relaxed text-ink-2">
-                Enter a URL to run a quick, one-off SEO &amp; GEO audit.
+                Enter a URL to run a quick SEO &amp; GEO audit.
               </p>
             </div>
 

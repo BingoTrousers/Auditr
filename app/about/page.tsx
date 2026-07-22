@@ -36,7 +36,7 @@ export default function About() {
       <div className="mx-auto max-w-[640px] px-6 pb-24 sm:px-8 lg:px-10">
         <h1 className="mb-3 font-sans text-[28px] font-extrabold tracking-tight text-ink-1">About Auditr</h1>
         <p className="mb-8 font-sans text-base leading-relaxed text-ink-2">
-          Auditr is a quick, one-off SEO &amp; GEO (AI-visibility) checker. Paste in a URL and it fetches the page,
+          Auditr is a quick SEO &amp; GEO (AI-visibility) checker. Paste in a URL and it fetches the page,
           runs a fixed set of on-page and AI-crawler checks, and gives you a score along with exactly which fixes
           would earn back the most points.
         </p>
