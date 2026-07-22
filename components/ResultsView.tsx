@@ -3,7 +3,7 @@
 import { useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import type { AuditCheck, AuditResult } from '@/lib/types';
 import { GROUP_LABELS } from '@/lib/audit/groupLabels';
-import type { AuditHistoryEntry } from '@/lib/audit/auditHistory';
+import type { ScanHistoryEntry } from '@/lib/history/types';
 import { FOCUS_RING, FOCUS_RING_INSET } from './focusRing';
 import { prefersReducedMotion } from './prefersReducedMotion';
 import ScoreCard from './ScoreCard';
@@ -14,7 +14,7 @@ import CompareSummary from './CompareSummary';
 
 interface ResultsViewProps {
   result: AuditResult;
-  previous?: AuditHistoryEntry | null;
+  previous?: ScanHistoryEntry | null;
   /** ISO timestamp when set — result is a past snapshot loaded from scan history, not a live check. */
   snapshotScannedAt?: string | null;
   /** Re-runs a live audit for this snapshot's URL. Only relevant while snapshotScannedAt is set. */

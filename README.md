@@ -98,8 +98,10 @@ lib/
   audit/groupLabels.ts       Shared check-group → display-label map (UI + export formats)
   audit/checkExplanations.ts Static "why this matters" copy per check label
   audit/exportFormats.ts     Pure formatters for the Export & Share panel (prompt/checklist/email/markdown/csv/json)
-  audit/auditHistory.ts      Client-side (localStorage) per-URL result history for run-over-run comparison
   types.ts                   Shared AuditCheck / AuditResult / GroupScore types
+  history/scanHistory.ts     All-URL scan history (localStorage, cap 100): getHistory/saveToHistory/clearHistory, plus per-URL lookups (getLatestEntryForUrl, getEntriesForUrl) used by run-over-run comparison and the score trend sparkline
+  history/types.ts           ScanHistoryEntry type
+  history/relativeTime.ts    "3 hours ago"-style formatting for the Scan History sidebar
 ```
 
 ## Notes on Production Use

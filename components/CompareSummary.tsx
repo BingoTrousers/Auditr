@@ -1,9 +1,9 @@
-import type { AuditHistoryEntry } from '@/lib/audit/auditHistory';
+import type { ScanHistoryEntry } from '@/lib/history/types';
 import type { AuditCheck, AuditResult } from '@/lib/types';
 
 interface CompareSummaryProps {
   current: AuditResult;
-  previous: AuditHistoryEntry;
+  previous: ScanHistoryEntry;
 }
 
 function checkKey(check: AuditCheck): string {
@@ -26,7 +26,7 @@ export default function CompareSummary({ current, previous }: CompareSummaryProp
     else if (STATUS_RANK[check.status] < STATUS_RANK[prevCheck.status]) regressed.push(check);
   }
 
-  const date = new Date(previous.timestamp).toLocaleString();
+  const date = new Date(previous.scannedAt).toLocaleString();
   const scoreClass = scoreDelta > 0 ? 'text-pass-text' : scoreDelta < 0 ? 'text-fail-text' : 'text-ink-2';
 
   return (

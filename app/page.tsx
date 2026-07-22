@@ -8,8 +8,7 @@ import ErrorAlert from '@/components/ErrorAlert';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScanHistory from '@/components/ScanHistory';
 import { FOCUS_RING } from '@/components/focusRing';
-import { getPreviousResult, saveResult, type AuditHistoryEntry } from '@/lib/audit/auditHistory';
-import { clearHistory, getHistory, saveToHistory } from '@/lib/history/scanHistory';
+import { clearHistory, getHistory, getLatestEntryForUrl, saveToHistory } from '@/lib/history/scanHistory';
 import type { ScanHistoryEntry } from '@/lib/history/types';
 import type { AuditResult } from '@/lib/types';
 
@@ -22,7 +21,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [rescanning, setRescanning] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
-  const [previousResult, setPreviousResult] = useState<AuditHistoryEntry | null>(null);
+  const [previousResult, setPreviousResult] = useState<ScanHistoryEntry | null>(null);
   const [error, setError] = useState<AuditError | null>(null);
   const [lastUrl, setLastUrl] = useState('');
   const [snapshotScannedAt, setSnapshotScannedAt] = useState<string | null>(null);
@@ -55,8 +54,7 @@ export default function Home() {
       return null;
     }
 
-    setPreviousResult(getPreviousResult(url));
-    saveResult(url, data as AuditResult);
+    setPreviousResult(getLatestEntryForUrl(url));
     saveToHistory(data as AuditResult);
     const entries = getHistory();
     setHistoryEntries(entries);
