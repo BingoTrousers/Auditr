@@ -411,7 +411,7 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
         })}
       </div>
 
-      <ExportToolbar result={result} />
+      <ExportToolbar result={result} scannedAt={snapshotScannedAt ?? null} />
     </div>
   );
 }

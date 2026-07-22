@@ -11,6 +11,7 @@ import { FOCUS_RING } from '@/components/focusRing';
 import { clearHistory, getHistory, getLatestEntryForUrl, saveToHistory } from '@/lib/history/scanHistory';
 import type { ScanHistoryEntry } from '@/lib/history/types';
 import type { AuditResult } from '@/lib/types';
+import { decodeFragment } from '@/lib/audit/permalink';
 
 interface AuditError {
   message: string;
@@ -27,9 +28,27 @@ export default function Home() {
   const [snapshotScannedAt, setSnapshotScannedAt] = useState<string | null>(null);
   const [historyEntries, setHistoryEntries] = useState<ScanHistoryEntry[]>([]);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [permalinkError, setPermalinkError] = useState<string | null>(null);
 
   useEffect(() => {
     setHistoryEntries(getHistory());
+  }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#s=')) return;
+
+    const fragment = hash.slice('#s='.length);
+    decodeFragment(fragment).then((decoded) => {
+      window.history.replaceState(null, '', window.location.pathname);
+      if (!decoded) {
+        setPermalinkError("This shared link couldn't be loaded — it may be corrupted or from an incompatible browser.");
+        return;
+      }
+      setResult(decoded.result);
+      setSnapshotScannedAt(decoded.scannedAt);
+      setLastUrl(decoded.result.url);
+    });
   }, []);
 
   // The wide two-column layout only appears once a report is actually on
@@ -215,6 +234,12 @@ export default function Home() {
                 Enter a URL to run a quick SEO &amp; GEO audit.
               </p>
             </div>
+
+            {permalinkError && (
+              <div className="mb-8 rounded-xl border border-line bg-surface px-4 py-3 text-center font-sans text-sm text-ink-2">
+                {permalinkError}
+              </div>
+            )}
 
             <UrlForm onSubmit={runAudit} loading={loading} />
 

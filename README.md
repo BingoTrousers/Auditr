@@ -20,6 +20,7 @@ A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript
 - Run-over-run comparison: results are cached per-URL in `localStorage` (client-side only, nothing sent to a server), and re-auditing the same URL shows a score delta and newly-passing/newly-failing checks
 - Score trend: a small sparkline next to the score shows the last several scans for that URL (from the same localStorage history used for run-over-run comparison), once 2+ prior scans exist
 - Export & Share: copy the audit as an LLM-ready prompt, a GitHub issue checklist, an email summary (with a one-click "Open in Email App" `mailto:` link), a full Markdown report, CSV, or raw JSON
+- Shareable permalink: "Copy Link" in the Export & Share panel packs the full report (score, every check, breakdown) into a `#s=...` URL fragment via the browser's native `CompressionStream` — no server storage, opening the link reconstructs the exact snapshot client-side with a working Rescan button
 - SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout — applied uniformly to the main page fetch and the robots.txt/llms.txt fetches
 - In-memory per-IP rate limiting (~5 requests/minute)
 - Deliberately unindexed: `app/robots.ts` disallows all crawlers, every response sends `X-Robots-Tag: noindex, nofollow`, and page metadata sets `robots: noindex, nofollow`
