@@ -63,10 +63,10 @@ export default function UrlForm({ onSubmit, loading, compact }: UrlFormProps) {
     <button
       type="submit"
       disabled={loading}
-      className={`grid whitespace-nowrap font-sans font-bold text-white transition-colors disabled:cursor-default ${FOCUS_RING} ${
+      className={`grid shrink-0 whitespace-nowrap font-sans font-bold text-white transition-colors disabled:cursor-default ${FOCUS_RING} ${
         compact
           ? 'absolute inset-y-1.5 right-1.5 place-items-center rounded-[8px] px-3 text-xs'
-          : 'self-end rounded-[10px] px-4 py-2.5 text-sm focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
+          : 'rounded-[10px] px-4 py-[13px] text-sm focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
       } ${loading ? 'bg-lineStrong' : 'cursor-pointer bg-accent hover:bg-accent-hover'}`}
     >
       {/* Both labels are stacked in the same grid cell so the button reserves
@@ -106,13 +106,15 @@ export default function UrlForm({ onSubmit, loading, compact }: UrlFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-2.5">
-      <div>
-        {label}
-        {input}
-        {error}
+    <form onSubmit={handleSubmit} noValidate>
+      <div className="flex flex-col gap-2.5 sm:flex-row">
+        <div className="min-w-0 flex-1">
+          {label}
+          {input}
+        </div>
+        {button}
       </div>
-      {button}
+      {error}
     </form>
   );
 }

@@ -7,6 +7,7 @@ import ResultsView from '@/components/ResultsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScanHistory from '@/components/ScanHistory';
+import { FOCUS_RING } from '@/components/focusRing';
 import { getPreviousResult, saveResult, type AuditHistoryEntry } from '@/lib/audit/auditHistory';
 import { clearHistory, getHistory, saveToHistory } from '@/lib/history/scanHistory';
 import type { ScanHistoryEntry } from '@/lib/history/types';
@@ -37,6 +38,7 @@ export default function Home() {
   // page) it's a simple centered form with history listed underneath, never
   // a sidebar next to an empty "no results yet" panel.
   const containerWidth = result ? 'max-w-[1280px]' : 'max-w-[640px]';
+  const containerPadding = 'px-6 sm:px-8 lg:px-10';
 
   /** Runs the audit and syncs comparison/history state. Returns the result and its new history entry id, or null on a handled error. */
   async function submitAudit(url: string): Promise<{ result: AuditResult; entryId: string | null } | null> {
@@ -121,10 +123,24 @@ export default function Home() {
     setSelectedEntryId(null);
   }
 
+  /** Returns to the pre-scan homepage view, discarding the currently displayed result. */
+  function goHome() {
+    setResult(null);
+    setPreviousResult(null);
+    setError(null);
+    setLastUrl('');
+    setSnapshotScannedAt(null);
+    setSelectedEntryId(null);
+  }
+
   return (
     <main className="min-h-screen bg-canvas">
-      <header className={`mx-auto flex ${containerWidth} items-center justify-between px-6 pb-10 pt-7 sm:px-8 lg:px-10`}>
-        <div className="flex items-center gap-2.5">
+      <header className={`mx-auto flex ${containerWidth} items-center justify-between ${containerPadding} pb-10 pt-7`}>
+        <button
+          type="button"
+          onClick={goHome}
+          className={`flex items-center gap-2.5 rounded-lg ${FOCUS_RING}`}
+        >
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent">
             <svg
               width="16"
@@ -142,7 +158,7 @@ export default function Home() {
             </svg>
           </div>
           <span className="font-sans text-[17px] font-extrabold tracking-tight text-ink-1">Auditr</span>
-        </div>
+        </button>
         <div className="flex items-center gap-4">
           <Link href="/about" className="font-sans text-sm font-semibold text-ink-2 hover:text-ink-1">
             About
@@ -151,7 +167,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className={`mx-auto ${containerWidth} px-6 pb-24 sm:px-8 lg:px-10`}>
+      <div className={`mx-auto ${containerWidth} ${containerPadding} pb-24`}>
         {result ? (
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[380px_minmax(0,1fr)] lg:items-start lg:gap-12">
             <div className="lg:sticky lg:top-8">
