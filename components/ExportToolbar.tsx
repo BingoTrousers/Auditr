@@ -214,7 +214,8 @@ export default function ExportToolbar({ result, scannedAt }: ExportToolbarProps)
       </div>
 
       <span aria-live="polite" className="sr-only">
-        {status?.state === 'copied' && `${EXPORTS.find((e) => e.format === status.format)?.label} copied to clipboard.`}
+        {status?.state === 'copied' &&
+          `${status.format === 'share' ? 'Link' : EXPORTS.find((e) => e.format === status.format)?.label} copied to clipboard.`}
         {status?.state === 'error' && 'Failed to copy to clipboard.'}
       </span>
     </section>
