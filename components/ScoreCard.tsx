@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { FOCUS_RING } from './focusRing';
 import { prefersReducedMotion } from './prefersReducedMotion';
+import ScoreSparkline from './ScoreSparkline';
 
 const ANIMATION_MS = 600;
 /** Cubic ease-out: fast start, gentle settle — matches the "plays quickly" brief. */
@@ -13,6 +14,8 @@ interface ScoreCardProps {
   url: string;
   contentScore?: number | null;
   technicalScore?: number | null;
+  /** Oldest→newest scores for this URL from prior scans (current included). Omit/empty to hide the sparkline. */
+  sparklineScores?: number[];
   /** ISO timestamp when set — this result is a past snapshot loaded from scan history, not a live check. */
   snapshotScannedAt?: string | null;
   /** Re-runs a live audit for this snapshot's URL. Only relevant while snapshotScannedAt is set. */
@@ -57,6 +60,7 @@ export default function ScoreCard({
   url,
   contentScore,
   technicalScore,
+  sparklineScores,
   snapshotScannedAt,
   onRescan,
   rescanning,
@@ -109,9 +113,12 @@ export default function ScoreCard({
         </div>
       </div>
 
-      <div className="mb-[18px] flex items-baseline gap-2">
-        <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{displayScore}</span>
-        <span className="font-mono text-xl font-medium text-ink-3">/ 100</span>
+      <div className="mb-[18px] flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{displayScore}</span>
+          <span className="font-mono text-xl font-medium text-ink-3">/ 100</span>
+        </div>
+        {sparklineScores && sparklineScores.length > 0 && <ScoreSparkline scores={sparklineScores} />}
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-line">

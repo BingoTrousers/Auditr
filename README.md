@@ -18,6 +18,7 @@ A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript
 - Weighted-category scoring: each check group has a point budget (not a flat penalty), and the UI shows exactly how many points are recoverable per area ("Biggest Wins" + per-group "+N pts available" badges), plus content/technical sub-scores on the score card
 - Every check row shows a short "why this matters" explanation alongside its message, so a non-technical reader isn't left guessing why a check affects SEO/GEO outcomes
 - Run-over-run comparison: results are cached per-URL in `localStorage` (client-side only, nothing sent to a server), and re-auditing the same URL shows a score delta and newly-passing/newly-failing checks
+- Score trend: a small sparkline next to the score shows the last several scans for that URL (from the same localStorage history used for run-over-run comparison), once 2+ prior scans exist
 - Export & Share: copy the audit as an LLM-ready prompt, a GitHub issue checklist, an email summary (with a one-click "Open in Email App" `mailto:` link), a full Markdown report, CSV, or raw JSON
 - SSRF protection: resolved-IP validation (not just URL string matching), fetch connection pinned to the validated IP (prevents DNS-rebinding TOCTOU), manual redirect handling with per-hop re-validation, response size cap, request timeout — applied uniformly to the main page fetch and the robots.txt/llms.txt fetches
 - In-memory per-IP rate limiting (~5 requests/minute)
@@ -73,6 +74,7 @@ app/
 components/
   UrlForm.tsx              URL input + validation + loading state
   ScoreCard.tsx            Overall score, color-coded band (Good/Needs Work/Poor), content/technical sub-scores
+  ScoreSparkline.tsx       Small inline SVG trend line of a URL's recent scores, shown next to ScoreCard's big number
   AuditSection.tsx         Single check row (label, status badge, message, "why this matters")
   ResultsView.tsx          Composes ScoreCard + Content/Technical tabs + sort control + Biggest Wins + grouped, collapsible AuditSections
   CompareSummary.tsx       Score delta + newly-passing/failing checks vs. the previous localStorage run for the same URL

@@ -3,6 +3,7 @@
 import { useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import type { AuditCheck, AuditResult } from '@/lib/types';
 import { GROUP_LABELS } from '@/lib/audit/groupLabels';
+import { getEntriesForUrl } from '@/lib/history/scanHistory';
 import type { ScanHistoryEntry } from '@/lib/history/types';
 import { FOCUS_RING, FOCUS_RING_INSET } from './focusRing';
 import { prefersReducedMotion } from './prefersReducedMotion';
@@ -219,6 +220,13 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
 
   const wafCheck = result.checks.find((check) => check.group === 'access' && check.status !== 'pass');
 
+  const sparklineScores = getEntriesForUrl(result.url, {
+    limit: 8,
+    asOf: snapshotScannedAt ? new Date(snapshotScannedAt).getTime() : Date.now(),
+  })
+    .map((entry) => entry.result.score)
+    .reverse();
+
   return (
     <div className="flex flex-col gap-6">
       <ScoreCard
@@ -227,6 +235,7 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
         url={result.url}
         contentScore={tabScore('content')}
         technicalScore={tabScore('technical')}
+        sparklineScores={sparklineScores}
         snapshotScannedAt={snapshotScannedAt}
         onRescan={onRescan}
         rescanning={rescanning}
