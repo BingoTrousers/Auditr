@@ -1,6 +1,6 @@
 # Auditr
 
-A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript. Paste a URL, get an instant on-page score, a breakdown of checks, and exactly how many points you'd recover by fixing each area — no database, no auth, nothing persisted.
+A stateless SEO/GEO audit tool built with Next.js 14 (App Router) and TypeScript. Paste a URL, get an instant on-page score, a breakdown of checks, and exactly how many points you'd recover by fixing each area — no database, no auth, no server-side persistence (the browser's own `localStorage` is used client-side for scan history/comparison and the theme choice; see below).
 
 ## Features
 
