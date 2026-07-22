@@ -100,6 +100,7 @@ lib/
   audit/groupLabels.ts       Shared check-group → display-label map (UI + export formats)
   audit/checkExplanations.ts Static "why this matters" copy per check label
   audit/exportFormats.ts     Pure formatters for the Export & Share panel (prompt/checklist/email/markdown/csv/json)
+  audit/permalink.ts         Compresses/decompresses a full AuditResult to/from a URL-fragment-safe string (native CompressionStream, no dependency) for the shareable permalink
   types.ts                   Shared AuditCheck / AuditResult / GroupScore types
   history/scanHistory.ts     All-URL scan history (localStorage, cap 100): getHistory/saveToHistory/clearHistory, plus per-URL lookups (getLatestEntryForUrl, getEntriesForUrl) used by run-over-run comparison and the score trend sparkline
   history/types.ts           ScanHistoryEntry type
