@@ -5,7 +5,14 @@ interface AuditSectionProps {
   label: string;
   status: CheckStatus;
   message: string;
+  /** Position within its group, used to stagger the reveal animation when the group expands. */
+  index: number;
 }
+
+// Caps the stagger so a group with many checks still finishes revealing
+// quickly, matching the score card's "plays fast" animation.
+const MAX_STAGGER_STEPS = 8;
+const STAGGER_STEP_MS = 35;
 
 const STATUS_STYLES: Record<CheckStatus, { pill: string; dot: string; label: string }> = {
   pass: { pill: 'bg-pass-bg border-pass-border text-pass-text', dot: 'bg-pass-dot', label: 'Pass' },
@@ -13,12 +20,13 @@ const STATUS_STYLES: Record<CheckStatus, { pill: string; dot: string; label: str
   fail: { pill: 'bg-fail-bg border-fail-border text-fail-text', dot: 'bg-fail-dot', label: 'Fail' },
 };
 
-export default function AuditSection({ label, status, message }: AuditSectionProps) {
+export default function AuditSection({ label, status, message, index }: AuditSectionProps) {
   const styles = STATUS_STYLES[status];
   const why = CHECK_EXPLANATIONS[label];
+  const delayMs = Math.min(index, MAX_STAGGER_STEPS) * STAGGER_STEP_MS;
 
   return (
-    <div className="border-t border-line px-5 py-4">
+    <div className="animate-row-in border-t border-line px-5 py-4" style={{ animationDelay: `${delayMs}ms` }}>
       <div className="mb-1.5 flex items-start justify-between gap-4">
         <span className="font-sans text-[15px] font-semibold text-ink-1">{label}</span>
         <span

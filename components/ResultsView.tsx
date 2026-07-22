@@ -5,7 +5,9 @@ import type { AuditCheck, AuditResult } from '@/lib/types';
 import { GROUP_LABELS } from '@/lib/audit/groupLabels';
 import type { AuditHistoryEntry } from '@/lib/audit/auditHistory';
 import { FOCUS_RING, FOCUS_RING_INSET } from './focusRing';
+import { prefersReducedMotion } from './prefersReducedMotion';
 import ScoreCard from './ScoreCard';
+import GroupScoreBar from './GroupScoreBar';
 import AuditSection from './AuditSection';
 import ExportToolbar from './ExportToolbar';
 import CompareSummary from './CompareSummary';
@@ -42,11 +44,6 @@ const TABS: { tab: Tab; label: string }[] = [
   { tab: 'content', label: 'Content' },
   { tab: 'technical', label: 'Technical' },
 ];
-
-/** Respects the user's OS-level motion preference for programmatic scrolling. */
-function prefersReducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /**
  * Moves both focus and selection within a single-select horizontal button
@@ -164,6 +161,16 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const sortRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // Remounting ScoreCard on every new result (rather than just on score
+  // change) is what makes its fill/count-up animation replay on a rescan
+  // that lands the same score, not just when the number actually moves.
+  const [scoreCardKey, setScoreCardKey] = useState(0);
+  const [lastResult, setLastResult] = useState(result);
+  if (result !== lastResult) {
+    setLastResult(result);
+    setScoreCardKey((key) => key + 1);
+  }
+
   const groups = new Map<string, AuditCheck[]>();
   for (const check of result.checks) {
     const existing = groups.get(check.group) ?? [];
@@ -215,6 +222,7 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
   return (
     <div className="flex flex-col gap-6">
       <ScoreCard
+        key={scoreCardKey}
         score={result.score}
         url={result.url}
         contentScore={tabScore('content')}
@@ -321,7 +329,13 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
         </div>
       </div>
 
-      <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="flex flex-col gap-3.5">
+      <div
+        key={activeTab}
+        id={`tabpanel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${activeTab}`}
+        className="flex animate-fade-in flex-col gap-3.5"
+      >
         {sortedGroups.map(([group, checks]) => {
           const expanded = expandedOverrides[group] ?? false;
           const groupScore = breakdownByGroup.get(group);
@@ -360,17 +374,12 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
                   </span>
 
                   {groupScore && (
-                    <span className="flex items-center gap-2 pl-6">
-                      <span aria-hidden="true" className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-                        <span
-                          className={`block h-full rounded-full transition-all ${barBand(ratio)}`}
-                          style={{ width: `${Math.round(ratio * 100)}%` }}
-                        />
-                      </span>
-                      <span className="font-mono text-[11px] font-medium text-ink-3">
-                        {groupScore.score}/{groupScore.weight}
-                      </span>
-                    </span>
+                    <GroupScoreBar
+                      key={`${group}-${scoreCardKey}`}
+                      score={groupScore.score}
+                      weight={groupScore.weight}
+                      barClassName={barBand(ratio)}
+                    />
                   )}
                 </button>
               </h3>
@@ -383,6 +392,7 @@ export default function ResultsView({ result, previous, snapshotScannedAt, onRes
                       label={check.label}
                       status={check.status}
                       message={check.message}
+                      index={index}
                     />
                   ))}
                 </div>

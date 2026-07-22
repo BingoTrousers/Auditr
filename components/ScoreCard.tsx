@@ -1,4 +1,12 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { FOCUS_RING } from './focusRing';
+import { prefersReducedMotion } from './prefersReducedMotion';
+
+const ANIMATION_MS = 600;
+/** Cubic ease-out: fast start, gentle settle — matches the "plays quickly" brief. */
+const ease = (t: number) => 1 - (1 - t) ** 3;
 
 interface ScoreCardProps {
   score: number;
@@ -56,6 +64,35 @@ export default function ScoreCard({
   const band = getBand(score);
   const clamped = Math.max(0, Math.min(100, score));
 
+  const [displayScore, setDisplayScore] = useState(() => (prefersReducedMotion() ? score : 0));
+  const [barWidth, setBarWidth] = useState(() => (prefersReducedMotion() ? clamped : 0));
+
+  // Animates once per mount — ResultsView remounts this component (via a
+  // changing `key`) whenever a new result lands, so a rescan that produces
+  // the same score still replays the fill/count-up.
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setDisplayScore(score);
+      setBarWidth(clamped);
+      return;
+    }
+
+    let frame: number;
+    const start = performance.now();
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - start) / ANIMATION_MS);
+      const eased = ease(progress);
+      setDisplayScore(Math.round(score * eased));
+      setBarWidth(clamped * eased);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    }
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only, see comment above
+  }, []);
+
   const subScores = [
     { label: 'Content', value: contentScore },
     { label: 'Technical', value: technicalScore },
@@ -73,12 +110,12 @@ export default function ScoreCard({
       </div>
 
       <div className="mb-[18px] flex items-baseline gap-2">
-        <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{score}</span>
+        <span className={`font-mono text-[56px] font-bold leading-none ${band.text}`}>{displayScore}</span>
         <span className="font-mono text-xl font-medium text-ink-3">/ 100</span>
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-line">
-        <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${clamped}%` }} />
+        <div className={`h-full rounded-full ${band.bar}`} style={{ width: `${barWidth}%` }} />
       </div>
 
       {subScores.length > 0 && (

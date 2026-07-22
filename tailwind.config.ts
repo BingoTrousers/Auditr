@@ -51,6 +51,20 @@ const config: Config = {
         card: 'var(--shadow-sm)',
         cardHover: 'var(--shadow-md)',
       },
+      keyframes: {
+        rowIn: {
+          from: { opacity: '0', transform: 'translateY(-4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+      },
+      animation: {
+        'row-in': 'rowIn 220ms ease-out both',
+        'fade-in': 'fadeIn 160ms ease-out both',
+      },
     },
   },
   plugins: [],
