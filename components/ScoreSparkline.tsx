@@ -17,11 +17,19 @@ export default function ScoreSparkline({ scores }: ScoreSparklineProps) {
   const usableHeight = HEIGHT - PADDING * 2;
   const stepX = (WIDTH - PADDING * 2) / (scores.length - 1);
 
-  const points = scores
-    .map((score, index) => {
+  const clampedScores = scores.map((score) => Math.max(0, Math.min(100, score)));
+  const min = Math.min(...clampedScores);
+  const max = Math.max(...clampedScores);
+  const range = max - min;
+
+  const points = clampedScores
+    .map((clamped, index) => {
       const x = PADDING + index * stepX;
-      const clamped = Math.max(0, Math.min(100, score));
-      const y = PADDING + usableHeight * (1 - clamped / 100);
+      // Scale to the range of the scores shown, not the absolute 0-100 scale,
+      // so a flat/near-flat run of high (or low) scores still sits centered
+      // in the box next to the "Trend" label instead of hugging an edge.
+      const ratio = range === 0 ? 0.5 : (clamped - min) / range;
+      const y = PADDING + usableHeight * (1 - ratio);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(' ');
